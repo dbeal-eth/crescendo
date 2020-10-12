@@ -1,0 +1,42 @@
+{
+  "name": "crescendo",
+  "version": "0.1.0",
+  "description": "Unite smart contract users performing the same operation to optimize repeated operations at the cost of slippage",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx buidler test"
+  },
+  "author": "klbyte",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.4.7",
+    "@nomiclabs/buidler-ethers": "^2.0.0",
+    "@nomiclabs/buidler-waffle": "^2.1.0",
+    "@opengsn/gsn": "^2.0.1",
+    "@openzeppelin/contracts": "^3.2.0",
+    "@typechain/ethers-v4": "^1.0.1",
+    "@typechain/ethers-v5": "^1.0.0",
+    "@typechain/truffle-v4": "^2.0.3",
+    "@typechain/truffle-v5": "^2.0.2",
+    "@typechain/web3-v1": "^1.0.0",
+    "@types/chai": "^4.2.12",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.11.2",
+    "@uniswap/v2-core": "^1.0.1",
+    "balancer-core": "git+https://github.com/balancer-labs/balancer-core.git#v1.0.0",
+    "buidler-ethers-v5": "^0.2.2",
+    "buidler-typechain": "^0.2.1",
+    "canonical-weth": "^1.4.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.1.1",
+    "ethers": "^5.0.15",
+    "lbp": "git+https://github.com/balancer-labs/configurable-rights-pool.git",
+    "ts-generator": "0.0.8",
+    "ts-node": "^9.0.0",
+    "typechain": "^2.0.1",
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "lodash": "^4.17.20"
+  }
+}
