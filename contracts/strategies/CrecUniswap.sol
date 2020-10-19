@@ -29,7 +29,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     int256 constant TREASURY_TARGET_PERIOD = 7 * 24 * 60 * 60; // 1 week
 
     // amount of money that should be in the treasury
-    int128 targetTreasuryBalance;
+    int128 public targetTreasuryBalance;
 
     // last amount of money that was in the treasury
     int128 laggingTreasuryBalance;
@@ -41,7 +41,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     uint128 lastFeeChangeDate;
 
     // number of seconds between trade execution events
-    uint32 targetInterval;
+    uint32 public targetInterval;
 
     // next ID to use on addAuthorizedPair
     uint16 nextId;
@@ -49,13 +49,13 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     ITreasury treasury;
 
     // when was the luint8(ast batch operation completed for this pair
-    mapping(uint16 => uint256) markedTime;
-    mapping(uint16 => address) markedAddress;
+    mapping(uint16 => uint256) public markedTime;
+    mapping(uint16 => address) public markedAddress;
 
-    mapping(uint16 => uint128) pairFee;
+    mapping(uint16 => uint128) public pairFee;
 
     // uniswap pairs which may be exchanged by this contract
-    mapping(uint16 => Pair) authorizedPairs;
+    mapping(uint16 => Pair) public authorizedPairs;
 
     event NewAuthorizedPair(uint16 id, address src, address dst, address uniswapPair);
 
@@ -63,6 +63,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
         treasury = ITreasury(_treasury);
         targetInterval = _targetInterval;
         targetTreasuryBalance = _targetTreasuryBalance;
+        laggingTreasuryBalance = targetTreasuryBalance;
 
         // try to target cost of an uniswap transaction given current gas prices
         lastFeeAmount = 100000 * uint128(tx.gasprice);

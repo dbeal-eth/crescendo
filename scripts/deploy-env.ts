@@ -1,5 +1,7 @@
 import _ from 'lodash';
 
+import bre from '@nomiclabs/buidler';
+
 import { ethers } from '@nomiclabs/buidler';
 
 import { ethers as Ethers } from "ethers";
@@ -19,10 +21,15 @@ import { Token } from '../typechain/Token';
 import { Weth9Factory } from '../typechain/Weth9Factory'
 import { Weth9 } from '../typechain/Weth9';
 
-import { Treasury } from '../typechain/Treasury';
-import { TreasuryFactory } from '../typechain/TreasuryFactory';
-import { CrpTreasuryFactoryFactory } from '../typechain/CrpTreasuryFactoryFactory';
-import { CrpTreasuryFactory } from '../typechain/CrpTreasuryFactory';
+const RELAY_HUB_CONFIG = {
+  gasOverhead: 35965,
+  postOverhead: 13950,
+  gasReserve: 100000,
+  maxWorkerCount: 10,
+  minimumStake: 1e18.toString(),
+  minimumUnstakeDelay: 1000,
+  maximumRecipientDeposit: 2e18.toString()
+}
 
 export interface EnvContracts {
     bfactory: BFactory,
@@ -39,20 +46,17 @@ export interface EnvContracts {
 
 export type EnvLibs = any;
 
-export const MAX = ethers.constants.MaxUint256;
-
-const RELAY_HUB_CONFIG = {
-  gasOverhead: 35965,
-  postOverhead: 13950,
-  gasReserve: 100000,
-  maxWorkerCount: 10,
-  minimumStake: 1e18.toString(),
-  minimumUnstakeDelay: 1000,
-  maximumRecipientDeposit: 2e18.toString()
-}
-
-
 export async function deployLibs(signer: Ethers.Signer) {
+
+    if(bre.network.name === 'kovan') {
+      console.log('kovan network detected');
+      return {
+      "__$4c38f6d953980cddd3b3b35f19465719a4$__": '0x8DBB8C9bFEb7689f16772c85136993cDA0c05eA4',
+      "__$d299c529ae9894de884ff0b1c314d5e4d5$__": '0xFd069b1d2daC3d1C277BeFa8E51Aad77D9f9167B',
+      "__$3090edb928940b408c0d9b35a986dbcddb$__": '0x0fd81EFddb4f8b2948B164145FbbcC8084136DcB',
+      }
+    }
+
     const rightsManager = await new RightsManagerFactory(signer).deploy();
     const smartPoolManager = await new SmartPoolManagerFactory(signer).deploy();
   
@@ -101,41 +105,23 @@ export async function deployEnv(signer: Ethers.Signer): Promise<[ EnvContracts, 
 
     const tokenFactory = new TokenFactory(signer);
 
-    contracts.tokA = await tokenFactory.deploy('Token A', 'TOKA', MAX);
-    contracts.tokB = await tokenFactory.deploy('Token B', 'TOKB', MAX);
-    contracts.tokC = await tokenFactory.deploy('Token C', 'TOKC', MAX);
+    contracts.tokA = await tokenFactory.deploy('Token A', 'TOKA', ethers.constants.MaxUint256);
+    contracts.tokB = await tokenFactory.deploy('Token B', 'TOKB', ethers.constants.MaxUint256);
+    contracts.tokC = await tokenFactory.deploy('Token C', 'TOKC', ethers.constants.MaxUint256);
 
     await contracts.tokC.deployed();
 
     return [ contracts, libs ];
 }
 
-export async function deployTreasury(signer: Ethers.Signer, contracts: EnvContracts, libs: EnvLibs): Promise<Treasury> {
+if(module == require.main) {
 
+    // convert flags to data
+    (async () => {
 
-    // deploy treasury factory
-    const factory = await new CrpTreasuryFactoryFactory(libs, signer).deploy();
+        const signer = (await ethers.getSigners())[0];
+        const [contracts, libs] = await deployEnv(signer);
 
-    await factory.deployed();
-
-    // tell the factory to deploy a treasury itself
-    let txn = await factory.newTreasury(contracts.bfactory.address, {
-      poolTokenSymbol: 'TREAS',
-      poolTokenName: 'Treasury',
-      constituentTokens: [contracts.weth.address, contracts.tokA.address, contracts.tokB.address, contracts.tokC.address],
-      tokenBalances: [ethers.utils.parseEther('300'), ethers.utils.parseEther('100'), ethers.utils.parseEther('100'), ethers.utils.parseEther('100')],
-      tokenWeights: [ethers.utils.parseEther('9'), ethers.utils.parseEther('3'), ethers.utils.parseEther('3'), ethers.utils.parseEther('3')],
-      swapFee: ethers.utils.parseEther('0.000001'),
-    }, {
-      canPauseSwapping: true,
-      canChangeSwapFee: false,
-      canChangeWeights: true,
-      canAddRemoveTokens: true,
-      canWhitelistLPs: true,
-      canChangeCap: true,
-    });
-
-    const rcpt = await txn.wait(1);
-
-    return new TreasuryFactory(libs, signer).attach(_.find(rcpt.events, e => e.event === 'LogNewTreasury')!.args![1])
+        console.log('env deployed:', _.map(contracts, (v, n) => `${n}: ${v.address}` ));
+    })();
 }

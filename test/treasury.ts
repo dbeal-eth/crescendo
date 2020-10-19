@@ -1,7 +1,9 @@
 //import ethers from 'ethers';
-import { expect } from 'chai';
+import { expect, use } from 'chai';
 
 import _ from 'lodash';
+
+import {deployMockContract, MockContract, solidity} from 'ethereum-waffle';
 
 import { ethers } from '@nomiclabs/buidler';
 import { ethers as Ethers } from 'ethers';
@@ -9,7 +11,10 @@ import { ethers as Ethers } from 'ethers';
 //import { ethers } from 'ethers';
 
 import { Treasury } from '../typechain/Treasury';
-import { EnvLibs, EnvContracts, deployEnv, deployTreasury } from './helper';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
+import { deployTreasury, deployTreasuryWithPool } from '../scripts/deploy-treasury';
+
+use(solidity);
 
 describe("Treasury", function() {
 
@@ -32,22 +37,10 @@ describe("Treasury", function() {
 
   it('deploys', async () => {
 
-    treasury = await deployTreasury(signer, contracts, libs);
-
-    expect(treasury).to.exist;
-
-    await contracts.weth.approve(treasury.address, ethers.constants.MaxUint256);
-    await contracts.tokA.approve(treasury.address, ethers.constants.MaxUint256);
-    await contracts.tokB.approve(treasury.address, ethers.constants.MaxUint256);
-    let approveTxn = await contracts.tokC.approve(treasury.address, ethers.constants.MaxUint256);
-
-    await approveTxn.wait(1);
-
-    let txn = await treasury["createPool(uint256)"](ethers.utils.parseEther((10000).toString()));
-
-    await txn.wait(1);
+    treasury = await deployTreasuryWithPool(signer, libs, contracts.bfactory.address, [[contracts.weth.address, ethers.utils.parseEther('500')], [contracts.tokA.address, ethers.utils.parseEther('100')], [contracts.tokB.address, ethers.utils.parseEther('100')]]);
 
     expect(await treasury.bPool()).to.not.eql(ethers.constants.AddressZero);
+    expect((await treasury.getTreasuryBalance()).toString()).to.eql(ethers.utils.parseEther('500').toString());
   });
 
   it('withdraws', async () => {

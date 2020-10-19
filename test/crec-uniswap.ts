@@ -9,7 +9,9 @@ import { ethers as Ethers } from 'ethers';
 import { CrecUniswap } from '../typechain/CrecUniswap';
 import { CrecUniswapFactory } from '../typechain/CrecUniswapFactory';
 
-import { EnvLibs, EnvContracts, deployEnv, deployTreasury, MAX } from './helper';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
+import { deployTreasury, deployTreasuryWithPool } from '../scripts/deploy-treasury';
+
 import { Treasury } from '../typechain/Treasury';
 
 import { TokenFactory } from '../typechain/TokenFactory';
@@ -47,18 +49,8 @@ describe("CrecUniswap", function() {
 
     [contracts, libs] = await deployEnv(signer);
 
-    treasury = await deployTreasury(signer, contracts, libs);
-
-    await contracts.weth.approve(treasury.address, ethers.constants.MaxUint256);
-    await contracts.tokA.approve(treasury.address, ethers.constants.MaxUint256);
-    await contracts.tokB.approve(treasury.address, ethers.constants.MaxUint256);
-    let approveTxn = await contracts.tokC.approve(treasury.address, ethers.constants.MaxUint256);
-
-    await approveTxn.wait(1);
-
-    let txn = await treasury["createPool(uint256)"](ethers.utils.parseEther((10000).toString()));
-    await txn.wait(1);
-  })
+    treasury = await deployTreasuryWithPool(signer, libs, contracts.bfactory.address, [[contracts.weth.address, ethers.utils.parseEther('500')], [contracts.tokA.address, ethers.utils.parseEther('100')], [contracts.tokB.address, ethers.utils.parseEther('100')]]);
+  });
 
   it('deploys', async () => {
     crecUniswap = await new CrecUniswapFactory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
@@ -67,6 +59,9 @@ describe("CrecUniswap", function() {
 
     const txn = await treasury.setController(crecUniswap.address);
     await txn.wait(1);
+
+    expect(await crecUniswap.targetInterval()).to.eql(600);
+    expect((await crecUniswap.targetTreasuryBalance()).toString()).to.exist;
   });
 
   it('adds authorized pair', async () => {
