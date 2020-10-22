@@ -8,13 +8,12 @@ import type { Ierc20 } from '../../typechain/Ierc20';
 import InitWallet from './InitWallet';
 
 //@ts-ignore
-import CREC_UNISWAP_DATA = require('text!artifacts/CrecUniswap.json');
+import CREC_UNISWAP_DATA = require('../../artifacts/CrecUniswap.json');
 //@ts-ignore
-import IERC20_DATA = require('text!artifacts/IERC20.json');
+import IERC20_DATA = require('../../artifacts/IERC20.json');
 //@ts-ignore
-import UNISWAP_PAIR_DATA = require('text!artifacts/IUniswapV2Pair.json');
-
-const CREC_UNISWAP_ADDRESS = '0x5bcb88A0d20426e451332eE6C4324b0e663c50E0';
+import UNISWAP_PAIR_DATA = require('../../artifacts/IUniswapV2Pair.json');
+import { getAddresses } from '../addresses';
 
 const UNISWAP_FEE = 0.003;
 
@@ -67,7 +66,7 @@ function CrecUniswap() {
       if(!provider)
         return;
 
-      const crecUniswap = new ethers.Contract(CREC_UNISWAP_ADDRESS, JSON.parse(CREC_UNISWAP_DATA).abi, provider) as unknown as CrecUniswapContract;
+      const crecUniswap = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, CREC_UNISWAP_DATA.abi, provider) as unknown as CrecUniswapContract;
 
       const pairs = await crecUniswap.queryFilter(crecUniswap.filters.NewAuthorizedPair(null, null, null, null));
 
@@ -83,7 +82,7 @@ function CrecUniswap() {
           continue;
 
         if(tokens[pair.args[1]]) {
-          const t = new ethers.Contract(pair.args[1], JSON.parse(IERC20_DATA).abi, provider) as unknown as Ierc20;
+          const t = new ethers.Contract(pair.args[1], IERC20_DATA.abi, provider) as unknown as Ierc20;
 
           const name = await t.name();
           const symbol = await t.symbol();
@@ -96,7 +95,7 @@ function CrecUniswap() {
         }
 
         if(tokens[pair.args[2]]) {
-          const t = new ethers.Contract(pair.args[2], JSON.parse(IERC20_DATA).abi, provider) as unknown as Ierc20;
+          const t = new ethers.Contract(pair.args[2], IERC20_DATA.abi, provider) as unknown as Ierc20;
     
           const name = await t.name();
           const symbol = await t.symbol();
@@ -128,13 +127,13 @@ function CrecUniswap() {
         return;
       }
 
-      const crecUniswap = new ethers.Contract(CREC_UNISWAP_ADDRESS, JSON.parse(CREC_UNISWAP_DATA).abi) as unknown as CrecUniswapContract;
+      const crecUniswap = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, CREC_UNISWAP_DATA).abi as unknown as CrecUniswapContract;
 
       // get fee
       const crecFee = (await crecUniswap.pairFee(selectedPair)).toNumber();
   
       // get trading rate
-      const uniswapPair = new ethers.Contract(CREC_UNISWAP_ADDRESS, JSON.parse(UNISWAP_PAIR_DATA).abi) as unknown as IUniswapV2Pair;
+      const uniswapPair = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, UNISWAP_PAIR_DATA).abi as unknown as IUniswapV2Pair;
   
       const reserves = await uniswapPair.getReserves();
   
@@ -185,9 +184,9 @@ function CrecUniswap() {
     if(!provider)
       return;
 
-    const srcContract = new ethers.Contract(contractInfo!.authorizedPairs[selectedPair!][0].addr, JSON.parse(IERC20_DATA).abi, provider.getSigner()) as unknown as Ierc20;
+    const srcContract = new ethers.Contract(contractInfo!.authorizedPairs[selectedPair!][0].addr, IERC20_DATA.abi, provider.getSigner()) as unknown as Ierc20;
 
-    const txn = await srcContract.approve(CREC_UNISWAP_ADDRESS, createCrecendoApproval(inAmount.toString(), selectedPair!));
+    const txn = await srcContract.approve(getAddresses(await provider.getNetwork()).crecUniswap, createCrecendoApproval(inAmount.toString(), selectedPair!));
 
     setSubmittedTxn(txn.hash);
   }

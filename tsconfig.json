@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
       "target": "es5",
-      "module": "umd",
+      "module": "commonjs",
+      "allowSyntheticDefaultImports": true,
       "moduleResolution": "node",
       "strict": true,
       "esModuleInterop": true,
@@ -11,7 +12,7 @@
       "noImplicitAny": false,
       "sourceMap": true
     },
-    "include": ["./scripts", "./test", "./web"],
+    "include": ["./scripts", "./test", "./web", "webpack.config.js"],
     "files": [
         "./buidler.config.ts",
         "./node_modules/@nomiclabs/buidler-ethers/src/type-extensions.d.ts",

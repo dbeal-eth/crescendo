@@ -46,7 +46,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     // next ID to use on addAuthorizedPair
     uint16 nextId;
 
-    ITreasury treasury;
+    address public treasury;
 
     // when was the luint8(ast batch operation completed for this pair
     mapping(uint16 => uint256) public markedTime;
@@ -60,7 +60,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     event NewAuthorizedPair(uint16 id, address src, address dst, address uniswapPair);
 
     constructor(address _treasury, uint32 _targetInterval, int128 _targetTreasuryBalance) public {
-        treasury = ITreasury(_treasury);
+        treasury = _treasury;
         targetInterval = _targetInterval;
         targetTreasuryBalance = _targetTreasuryBalance;
         laggingTreasuryBalance = targetTreasuryBalance;
@@ -76,10 +76,10 @@ contract CrecUniswap is ITreasuryManager, Ownable {
         uint16 pair = uint16At(data, 0);
         uint256 count = uint256At(data, 0x4);
 
-        return this.getReward(pair, uint16(count));
+        return getReward(pair, count);
     }
 
-    function getReward(uint16 pair, uint16 count) external view returns (uint256) {
+    function getReward(uint16 pair, uint count) internal view returns (uint256) {
 
         uint execTime = markedTime[pair];
         require(execTime > 0, "not marked");
@@ -145,8 +145,8 @@ contract CrecUniswap is ITreasuryManager, Ownable {
         nextId = nextId + 2;
 
         // infinite approve treasury to pull this token for fees
-        IERC20(token0).approve(address(treasury), type(uint256).max);
-        IERC20(token1).approve(address(treasury), type(uint256).max);
+        IERC20(token0).approve(treasury, type(uint256).max);
+        IERC20(token1).approve(treasury, type(uint256).max);
 
         emit NewAuthorizedPair(nextId - 2, p0.src, p0.dst, p0.uniswapPair);
         emit NewAuthorizedPair(nextId - 1, p1.src, p1.dst, p1.uniswapPair);
@@ -154,7 +154,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
 
     function updateFee(uint16 pair) internal {
 
-        int256 currentTreasuryBalance = int256(treasury.getTreasuryBalance());
+        int256 currentTreasuryBalance = int256(ITreasury(treasury).getTreasuryBalance());
 
         int256 deltaTreasuryBalance = int256(currentTreasuryBalance) - laggingTreasuryBalance;
         int256 deltaTime = int256(block.timestamp) - int256(lastFeeChangeDate);
@@ -197,6 +197,8 @@ contract CrecUniswap is ITreasuryManager, Ownable {
     }
 
     function exec(uint16 pair, address[] calldata addrs) external {
+        //require(!isTrustedForwarder(msg.sender));
+
         Pair memory p = authorizedPairs[pair];
         IERC20 src = IERC20(p.src);
         IERC20 dst = IERC20(p.dst);
@@ -218,7 +220,7 @@ contract CrecUniswap is ITreasuryManager, Ownable {
             if(fee > 0 && inAmount > fee) {
                 // deposit fee to treasury
                 src.transferFrom(addrs[i], address(this), fee);
-                treasury.deposit(p.src, address(this), fee);
+                ITreasury(treasury).deposit(p.src, address(this), fee);
 
                 src.transferFrom(addrs[i], p.uniswapPair, inAmount - fee);
 
@@ -258,6 +260,9 @@ contract CrecUniswap is ITreasuryManager, Ownable {
 
         // congrats last person, you get the dust
         dst.transfer(addrs[addrs.length - 1], amountOut - totalOut);
+
+        // send reward
+        ITreasury(treasury).withdraw(ITreasury(treasury).getTreasuryToken(), msg.sender, getReward(pair, addrs.length));
 
         // update fee
         updateFee(pair);

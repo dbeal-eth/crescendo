@@ -109,7 +109,7 @@ describe("CrecUniswap", function() {
     await crecUniswap.mark(1, await signers[1].getAddress());
   });
 
-  it('calculates reward', async () => {
+  it.skip('calculates reward', async () => {
 
     // get initial reward
     await ethers.provider.send('evm_mine', []);

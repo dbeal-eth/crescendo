@@ -50,15 +50,24 @@ export async function deployLibs(signer: Ethers.Signer) {
 
     if(bre.network.name === 'kovan') {
       console.log('kovan network detected');
+
       return {
+        "__$4c38f6d953980cddd3b3b35f19465719a4$__": '0x244dA0A98e10Ac07112E9c87F82c62a84Ea1C460',
+        "__$d299c529ae9894de884ff0b1c314d5e4d5$__": '0x2D556F6408e4f46Ce9181ce6Efb625fA132db223',
+        "__$3090edb928940b408c0d9b35a986dbcddb$__": '0x2b4722F64E3b6d880bd618e162CEa6A41995D60F',
+      };
+
+      /*return {
       "__$4c38f6d953980cddd3b3b35f19465719a4$__": '0x8DBB8C9bFEb7689f16772c85136993cDA0c05eA4',
       "__$d299c529ae9894de884ff0b1c314d5e4d5$__": '0xFd069b1d2daC3d1C277BeFa8E51Aad77D9f9167B',
       "__$3090edb928940b408c0d9b35a986dbcddb$__": '0x0fd81EFddb4f8b2948B164145FbbcC8084136DcB',
-      }
+      }*/
     }
 
     const rightsManager = await new RightsManagerFactory(signer).deploy();
+    await rightsManager.deployed();
     const smartPoolManager = await new SmartPoolManagerFactory(signer).deploy();
+    await smartPoolManager.deployed();
   
     // safe math does not have an ABI for some reason...?
     const safeMath = await (await ethers.getContractFactory("BalancerSafeMath")).deploy();

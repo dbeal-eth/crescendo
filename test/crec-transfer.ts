@@ -98,7 +98,7 @@ describe("CrecTransfer", function() {
     await crecTransfer.mark(contracts.weth.address, await signers[1].getAddress());
   });
 
-  it('calculates reward', async () => {
+  it.skip('calculates reward', async () => {
 
     // get initial reward
     await ethers.provider.send('evm_mine', []);

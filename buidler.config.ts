@@ -31,7 +31,8 @@ module.exports = {
       url: `http://localhost:8545`
     },
     kovan: {
-      url: `https://poa-kovan.gateway.pokt.network/v1/${process.env.POKT}`,
+      //url: `https://poa-kovan.gateway.pokt.network/v1/${process.env.POKT}`,
+      url: `https://kovan.infura.io/v3/${process.env.INFURA}`,
       accounts: [process.env.KEY || '']
     },
     mainnet: {

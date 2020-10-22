@@ -4,11 +4,7 @@ pragma solidity ^0.6.8;
 // Needed to handle structures externally
 pragma experimental ABIEncoderV2;
 
-import "@nomiclabs/buidler/console.sol";
-
 import "lbp/contracts/ConfigurableRightsPool.sol";
-
-import "./Treasury.sol";
 
 import "@opengsn/gsn/contracts/interfaces/IPaymaster.sol";
 import "@opengsn/gsn/contracts/interfaces/IRelayHub.sol";
@@ -16,7 +12,7 @@ import "@opengsn/gsn/contracts/interfaces/IRelayHub.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/ITreasuryManager.sol";
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+//import "@openzeppelin/contracts/math/SafeMath.sol";
 
 interface WETH {
     function deposit() external payable;
@@ -27,27 +23,30 @@ interface WETH {
  * Modified balancer ConfigurableRightsPool which can be used for paying transaction minters for gas
  * Changes are:
  * * owner is authorized to spend and supply tokens at any time with no restrictions on pool tokens whatsoever
- * * ability to add tokens in one step (this protocol has no use of time lock)
- * * ability to lock trading for single pair to accumulate tokens we desire over time
+ * * OpenGSN compliant Paymaster
+ * 
+ * This contract currently barely fits under the deployment limit, so if strings are missing for reverts... that is why
  */
 contract Treasury is ITreasury, ConfigurableRightsPool {
+    //overhead of forwarder verify+signature, plus hub overhead.
+    uint32 constant FORWARDER_HUB_OVERHEAD = 50000;
+
+    //These parameters are documented in IPaymaster.GasLimits
+    uint32 constant PRE_RELAYED_CALL_GAS_LIMIT = 100000;
+    uint32 constant POST_RELAYED_CALL_GAS_LIMIT = 110000;
+    uint32 constant PAYMASTER_ACCEPTANCE_BUDGET = PRE_RELAYED_CALL_GAS_LIMIT + FORWARDER_HUB_OVERHEAD;
+
 
     IRelayHub relayHub;
 
-    uint256 constant public TARGET_RELAYHUB_DEPOSIT = 1e18;
+    IForwarder public override trustedForwarder;
 
-    //overhead of forwarder verify+signature, plus hub overhead.
-    uint256 constant public FORWARDER_HUB_OVERHEAD = 50000;
-
-    //These parameters are documented in IPaymaster.GasLimits
-    uint256 constant public PRE_RELAYED_CALL_GAS_LIMIT = 5000000;
-    uint256 constant public POST_RELAYED_CALL_GAS_LIMIT = 6000000;
-    uint256 constant public PAYMASTER_ACCEPTANCE_BUDGET = PRE_RELAYED_CALL_GAS_LIMIT + FORWARDER_HUB_OVERHEAD;
+    uint256 targetRelayHubDeposit;
     /*
      * modifier to be used by recipients as access control protection for preRelayedCall & postRelayedCall
      */
     modifier relayHubOnly() {
-        require(msg.sender == address(relayHub), "function can only be called by RelayHub");
+        require(msg.sender == address(relayHub));
         _;
     }
 
@@ -121,6 +120,13 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
         return bPool.getBalance(bPool.getCurrentTokens()[0]);
     }
 
+    function getTreasuryToken()
+        external override view
+        returns (address)
+    {
+        return bPool.getCurrentTokens()[0];
+    }
+
     function getGasLimits()
     public
     override
@@ -136,12 +142,17 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
         );
     }
 
-    function trustedForwarder() external override view returns (IForwarder) {
-
+    function setTrustedForwarder(address forwarder) public {
+        trustedForwarder = IForwarder(forwarder);
     }
 
-    function setRelayHub(IRelayHub hub) external onlyOwner {
+    /*function trustedForwarder() external override view returns (IForwarder) {
+        return IForwarder(_trustedForwarder);
+    }*/
+
+    function setRelayHub(IRelayHub hub, uint256 targetDeposit) external onlyOwner {
         relayHub = hub;
+        targetRelayHubDeposit = targetDeposit;
 
         // send money to relayhub
         fundPaymaster(0);
@@ -156,14 +167,14 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
     }
 
     function versionPaymaster() external override view returns (string memory) {
-        return "Treasury v0.0.1";
+        return "a";
     }
 
     function fundPaymaster(uint256 spent) private needsBPool {
 
-        require(address(relayHub) != address(0), "relay hub address not set");
+        require(address(relayHub) != address(0));
 
-        uint256 refillAmt = spent + TARGET_RELAYHUB_DEPOSIT - this.getRelayHubDeposit();
+        uint256 refillAmt = spent + targetRelayHubDeposit - this.getRelayHubDeposit();
 
         WETH weth = WETH(bPool.getCurrentTokens()[0]);
 
@@ -189,18 +200,34 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
     override
     virtual
     relayHubOnly
+    needsBPool
     returns (bytes memory context, bool revertOnRecipientRevert) {
         (relayRequest, signature, approvalData, maxPossibleGas);
 
         // make sure the caller is calling the owner
-        require(relayRequest.request.to != this.getController(), "can only call owner");
-        require(relayRequest.relayData.pctRelayFee == 0, "baseRelayFee only accepted");
+        require(relayRequest.relayData.pctRelayFee == 0);
 
-        // TODO: need safe math here?
-        uint256 maxSpend = maxPossibleGas * relayRequest.relayData.gasPrice + relayRequest.relayData.baseRelayFee;
+        // either paying owner, or a `permit` call to one of the supported erc20 tokens
+        if(relayRequest.request.to != this.getController()) {
+            // must be an address in this bpool
+            require(bPool.isBound(relayRequest.request.to));
 
-        // make sure the owner thinks pay is good
-        require(ITreasuryManager(this.getController()).getMaxSpend(relayRequest.request.data) >= maxSpend, "txn too expensive");
+            bytes memory data = relayRequest.request.data;
+
+            // must call permit
+            require(data[0] == 0xd5 && 
+                    data[1] == 0x05 &&
+                    data[2] == 0xac &&
+                    data[3] == 0xcf);
+
+            // must permit our owner
+            address spender;
+            assembly {
+                spender := mload(add(data, 0x124))
+            }
+
+            require(spender == this.getController());
+        }
 
         return ("", true);
     }
@@ -218,7 +245,7 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
     {
         (context, success, gasUseWithoutPost, relayData);
 
-        fundPaymaster(gasUseWithoutPost * relayData.gasPrice);
+        //fundPaymaster(gasUseWithoutPost * relayData.gasPrice);
     }
 
 }

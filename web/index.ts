@@ -1,4 +1,4 @@
-requirejs.config({
+/*requirejs.config({
     //"baseUrl": "/",
     "paths": {
       "artifacts":       "./artifacts",
@@ -10,13 +10,21 @@ requirejs.config({
       "react-dom":       "https://unpkg.com/react-dom@16/umd/react-dom.development",
       "@portis/web3":    "https://unpkg.com/@portis/web3@2.0.0-beta.59/umd/index"
     }
-});
+});*/
 
 // Load the main app module to start the app
 //requirejs(["./components/CrecUniswap.js"]);
 
-requirejs(['./components/CrecUniswap.js', 'react', 'react-dom'], (CrecUniswap, React, ReactDOM) => {
-  var domContainer = document.querySelector('#crecUniswap');
- 
-  ReactDOM.render(React.createElement(CrecUniswap.default), domContainer);
-});
+//requirejs(['./components/CrecUniswap.js', './components/CrecTransfer.js', 'react', 'react-dom'], (CrecUniswap, CrecTransfer, React, ReactDOM) => {
+
+import CrecUniswap from "./components/CrecUniswap";
+import CrecTransfer from "./components/CrecTransfer";
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+//ReactDOM.render(React.createElement(CrecUniswap), document.querySelector('#crecUniswap'));
+
+ReactDOM.render(React.createElement(CrecTransfer), document.querySelector('#crecTransfer'));
+
+//});

@@ -1,15 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.8;
 
-import "@nomiclabs/buidler/console.sol";
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "centre-tokens/contracts/v2/FiatTokenV2.sol";
 
 /**
  * Basic token only for testing
  */
-contract Token is ERC20 {
-    constructor(string memory name, string memory symbol, uint256 initialBalance) ERC20(name, symbol) public {
-        _mint(msg.sender, initialBalance);
+contract Token is FiatTokenV2 {
+    constructor(string memory name, string memory symbol, uint256 initialBalance) public {
+
+        initialize(name, symbol, "USD", 18, msg.sender, msg.sender, msg.sender, msg.sender);
+        DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(name, "1");
+        _initializedV2 = true;
+
+        balances[msg.sender] = initialBalance;
     }
 }

@@ -69,14 +69,10 @@ describe("Treasury", function() {
   })
 
   it('funds relayhub', async () => {
-    const txn = await treasury.setRelayHub(contracts.relayHub.address);
+    const txn = await treasury.setRelayHub(contracts.relayHub.address, ethers.utils.parseEther('1'));
 
     await txn.wait(1);
 
-    expect((await treasury.getRelayHubDeposit()).toString()).to.eql((await treasury.TARGET_RELAYHUB_DEPOSIT()).toString());
-  });
-
-  it('serves as paymaster for owner', async () => {
-
+    expect((await treasury.getRelayHubDeposit()).toString()).to.eql((ethers.utils.parseEther('1')).toString());
   });
 });

@@ -10,7 +10,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/ITreasuryManager.sol";
 import "../interfaces/ITreasury.sol";
 
-contract CrecTransfer is ITreasuryManager, Ownable {
+import "@opengsn/gsn/contracts/interfaces/IRelayRecipient.sol";
+
+contract CrecTransfer is ITreasuryManager, IRelayRecipient, Ownable {
 
     int256 constant TREASURY_TARGET_PERIOD = 7 * 24 * 60 * 60; // 1 week
 
@@ -31,7 +33,7 @@ contract CrecTransfer is ITreasuryManager, Ownable {
 
     uint32 nextId = 1;
 
-    ITreasury treasury;
+    address public treasury;
 
     mapping(address => uint256) public markedTime;
     mapping(address => address) public markedAddress;
@@ -45,13 +47,67 @@ contract CrecTransfer is ITreasuryManager, Ownable {
     event NewRegistration(address addr, uint32 id);
 
     constructor(address _treasury, uint32 _targetInterval, int128 _targetTreasuryBalance) public {
-        treasury = ITreasury(_treasury);
+        treasury = _treasury;
         targetInterval = _targetInterval;
         targetTreasuryBalance = _targetTreasuryBalance;
         laggingTreasuryBalance = targetTreasuryBalance;
 
         // try to target cost of a transfer transaction given current gas prices
         lastFeeAmount = 50000 * uint128(tx.gasprice);
+    }
+
+    function isTrustedForwarder(address forwarder) public override view returns(bool) {
+        return forwarder == address(ITreasury(treasury).trustedForwarder());
+    }
+
+    /**
+     * return the sender of this call.
+     * if the call came through our trusted forwarder, return the original sender.
+     * otherwise, return `msg.sender`.
+     * should be used in the contract anywhere instead of msg.sender
+     */
+    function _msgSender() internal override(IRelayRecipient, Context) virtual view returns (address payable ret) {
+        if (msg.data.length >= 24 && isTrustedForwarder(msg.sender)) {
+            // At this point we know that the sender is a trusted forwarder,
+            // so we trust that the last bytes of msg.data are the verified sender address.
+            // extract sender address from the end of msg.data
+            assembly {
+                ret := shr(96,calldataload(sub(calldatasize(),20)))
+            }
+        } else {
+            return msg.sender;
+        }
+    }
+
+    /**
+     * return the msg.data of this call.
+     * if the call came through our trusted forwarder, then the real sender was appended as the last 20 bytes
+     * of the msg.data - so this method will strip those 20 bytes off.
+     * otherwise, return `msg.data`
+     * should be used in the contract instead of msg.data, where the difference matters (e.g. when explicitly
+     * signing or hashing the
+     */
+    function _msgData() internal override(IRelayRecipient, Context) virtual view returns (bytes memory ret) {
+        if (msg.data.length >= 24 && isTrustedForwarder(msg.sender)) {
+            // At this point we know that the sender is a trusted forwarder,
+            // we copy the msg.data , except the last 20 bytes (and update the total length)
+            assembly {
+                let ptr := mload(0x40)
+                // copy only size-20 bytes
+                let size := sub(calldatasize(),20)
+                // structure RLP data as <offset> <length> <bytes>
+                mstore(ptr, 0x20)
+                mstore(add(ptr,32), size)
+                calldatacopy(add(ptr,64), 0, size)
+                return(ptr, add(size,64))
+            }
+        } else {
+            return msg.data;
+        }
+    }
+
+    function versionRecipient() external override virtual view returns (string memory) {
+        return "CrecTransfer";
     }
 
     function register(address addr) public {
@@ -85,10 +141,10 @@ contract CrecTransfer is ITreasuryManager, Ownable {
         address token = address(uint256At(data, 0));
         uint256 count = uint256At(data, 256);
 
-        return this.getReward(token, count);
+        return getReward(token, count);
     }
 
-    function getReward(address token, uint count) external view returns (uint256) {
+    function getReward(address token, uint count) internal view returns (uint256) {
 
         uint execTime = markedTime[token];
         require(execTime > 0, "not marked");
@@ -112,14 +168,14 @@ contract CrecTransfer is ITreasuryManager, Ownable {
 
         tokenFee[token] = lastFeeAmount;
 
-        IERC20(token).approve(address(treasury), type(uint256).max);
+        IERC20(token).approve(treasury, type(uint256).max);
 
         emit NewAuthorizedToken(token);
     }
 
     function updateFee(address addr) internal {
 
-        int256 currentTreasuryBalance = int256(treasury.getTreasuryBalance());
+        int256 currentTreasuryBalance = int256(ITreasury(treasury).getTreasuryBalance());
 
         int256 deltaTreasuryBalance = int256(currentTreasuryBalance) - laggingTreasuryBalance;
         int256 deltaTime = int256(block.timestamp) - int256(lastFeeChangeDate);
@@ -155,6 +211,8 @@ contract CrecTransfer is ITreasuryManager, Ownable {
     }
 
     function exec(address token, address[] calldata addrs) external {
+        require(!isTrustedForwarder(msg.sender));
+
         IERC20 t = IERC20(token);
 
         uint transferFee = tokenFee[token];
@@ -175,30 +233,35 @@ contract CrecTransfer is ITreasuryManager, Ownable {
         t.transferFrom(addrs[0], address(this), fee);
         amounts[0] -= fee;
 
-        treasury.deposit(token, address(this), fee);
+        ITreasury(treasury).deposit(token, address(this), fee);
 
-        uint i = addrs.length - 1;
-        uint curTo = 0;
-        uint dstRemaining = amounts[curTo] + fee - transferFee;
-        uint srcRemaining = amounts[addrs.length - 1];
-        while(i >= 0 && curTo < addrs.length - 1) {
-            if(dstRemaining < srcRemaining) {
-                t.transferFrom(addrs[i], destAddrs[curTo], dstRemaining);
+        {
+            uint i = addrs.length - 1;
+            uint curTo = 0;
+            uint dstRemaining = amounts[curTo] + fee - transferFee;
+            uint srcRemaining = amounts[addrs.length - 1];
+            while(i >= 0 && curTo < addrs.length - 1) {
+                if(dstRemaining < srcRemaining) {
+                    t.transferFrom(addrs[i], destAddrs[curTo], dstRemaining);
 
-                srcRemaining -= dstRemaining;
-                dstRemaining = amounts[++curTo] - transferFee;
+                    srcRemaining -= dstRemaining;
+                    dstRemaining = amounts[++curTo] - transferFee;
+                }
+                else {
+                    t.transferFrom(addrs[i], destAddrs[curTo], srcRemaining);
+                    
+                    dstRemaining -= srcRemaining;
+                    srcRemaining = amounts[--i];
+                }
             }
-            else {
-                t.transferFrom(addrs[i], destAddrs[curTo], srcRemaining);
-                
-                dstRemaining -= srcRemaining;
-                srcRemaining = amounts[--i];
-            }
+
+            require(srcRemaining == dstRemaining, "final transfer amount check");
+
+            t.transferFrom(addrs[i], destAddrs[curTo], srcRemaining);
         }
 
-        require(srcRemaining == dstRemaining, "final transfer amount check");
-
-        t.transferFrom(addrs[i], destAddrs[curTo], srcRemaining);
+        // send reward
+        ITreasury(treasury).withdraw(ITreasury(treasury).getTreasuryToken(), msg.sender, getReward(token, addrs.length));
 
         // update fee
         updateFee(token);

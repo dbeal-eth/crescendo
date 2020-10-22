@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Portis from '@portis/web3';
 import { ethers } from 'ethers';
 
+import { RelayProvider } from '@opengsn/gsn/dist/RelayProvider';
+import { resolveConfigurationGSN } from '@opengsn/gsn/dist/GSNConfigurator';
+
 function InitWallet(props) {
 
   const network = 'kovan';
@@ -19,7 +22,10 @@ function InitWallet(props) {
     // enable metamask
     const accounts = await eth.request({method: 'eth_requestAccounts'});
 
-    props.onDone(new ethers.providers.Web3Provider(eth), accounts[0]);
+    props.onDone(new ethers.providers.Web3Provider(eth), async (paymasterAddress) => {
+      const configuration = await resolveConfigurationGSN(eth, { paymasterAddress })
+      return new RelayProvider(eth, configuration);
+    }, accounts[0]);
   }
 
   async function initPortis() {

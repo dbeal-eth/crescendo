@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.6.12;
+pragma solidity ^0.6.8;
 
 // Needed to handle structures externally
 pragma experimental ABIEncoderV2;
@@ -12,6 +12,7 @@ import "./Treasury.sol";
 /**
  * @author klbyte
  * @title Configurable Rights Pool Treasury Factory - create pool of tokens for a treasury
+ * NOTE: this contract is currently undeployable on real eth net due to size. Instaed, deploy treasury directly.
  */
 contract CRPTreasuryFactory {
     // State variables
@@ -44,11 +45,11 @@ contract CRPTreasuryFactory {
         external
         returns (Treasury)
     {
-        require(poolParams.constituentTokens.length >= BalancerConstants.MIN_ASSET_LIMIT, "ERR_TOO_FEW_TOKENS");
+        require(poolParams.constituentTokens.length >= BalancerConstants.MIN_ASSET_LIMIT, "few tokens");
 
         // Arrays must be parallel
-        require(poolParams.tokenBalances.length == poolParams.constituentTokens.length, "ERR_START_BALANCES_MISMATCH");
-        require(poolParams.tokenWeights.length == poolParams.constituentTokens.length, "ERR_START_WEIGHTS_MISMATCH");
+        require(poolParams.tokenBalances.length == poolParams.constituentTokens.length, "balances");
+        require(poolParams.tokenWeights.length == poolParams.constituentTokens.length, "weights");
 
         Treasury t = new Treasury(
             factoryAddress,
