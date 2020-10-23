@@ -245,7 +245,7 @@ function CrecTransfer() {
       <input type="text" placeholder="0x0000..." onChange={(e) => setDestAddress(e.target.value)} />
 
       <p>Enter the amount to send:</p>
-      <input type="number" onChange={(e) => setInAmount(parseFloat(e.target.value))} />
+      <input type="number" step="0.01" onChange={(e) => setInAmount(parseFloat(e.target.value))} />
 
       <p>Fee: {getFee()} {selectedToken?.symbol}</p>
       <p>Estimated send time: within {contractInfo ? (contractInfo.targetPeriod * 2 / 60) + ' mins' : 'calculating...'}</p>

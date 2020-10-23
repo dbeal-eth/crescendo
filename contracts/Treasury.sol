@@ -204,9 +204,6 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
     returns (bytes memory context, bool revertOnRecipientRevert) {
         (relayRequest, signature, approvalData, maxPossibleGas);
 
-        // make sure the caller is calling the owner
-        require(relayRequest.relayData.pctRelayFee == 0);
-
         // either paying owner, or a `permit` call to one of the supported erc20 tokens
         if(relayRequest.request.to != this.getController()) {
             // must be an address in this bpool
