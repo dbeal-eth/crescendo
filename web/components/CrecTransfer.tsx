@@ -110,6 +110,10 @@ function CrecTransfer() {
 
       const configuration = await resolveConfigurationGSN(provider.provider as any, { paymasterAddress: newContractInfo.treasuryAddress })
 
+      // for special compatibility with portis
+      configuration.methodSuffix ="_v3";
+      configuration.jsonStringifyRequest = true;
+
       setContractInfo(newContractInfo);
       setGsnProvider(new ethers.providers.Web3Provider(new RelayProvider(provider.provider as any, configuration) as any));
 
