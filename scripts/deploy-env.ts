@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
-import bre from '@nomiclabs/buidler';
+import bre from 'hardhat';
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 
 import { ethers as Ethers } from "ethers";
 

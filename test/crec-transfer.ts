@@ -3,7 +3,7 @@ import { expect, use } from 'chai';
 
 import {deployMockContract, MockContract, solidity} from 'ethereum-waffle';
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 import { BigNumber, ethers as Ethers } from 'ethers';
 
 import { CrecTransfer } from '../typechain/CrecTransfer';

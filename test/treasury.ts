@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import {deployMockContract, MockContract, solidity} from 'ethereum-waffle';
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 import { ethers as Ethers } from 'ethers';
 
 //import { ethers } from 'ethers';

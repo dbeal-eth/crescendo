@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { BigNumber, ethers as Ethers } from "ethers";
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 
 import { deployLibs, EnvLibs } from './deploy-env';
 
@@ -23,7 +23,7 @@ export async function deployTreasuryWithPool(signer: Ethers.Signer, libs: EnvLib
 
     for(const token of tokens) {
         // typescript has some sort of issue with the generated code for IERC20
-        const ctrct = (await (await ethers.getContractFactory('IERC20', signer)).attach(token[0]));
+        const ctrct = await (await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer));
         
         const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256) as Ierc20;
 
@@ -57,7 +57,7 @@ export async function deployTreasuryWithPoolNoFactory(signer: Ethers.Signer, lib
 
     for(const token of tokens) {
         // typescript has some sort of issue with the generated code for IERC20
-        const ctrct = (await (await ethers.getContractFactory('IERC20', signer)).attach(token[0]));
+        const ctrct = await (await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer));
         
         const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256) as Ierc20;
 

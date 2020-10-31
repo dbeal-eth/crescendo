@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.8;
 
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lbp/interfaces/IERC20.sol";
 
 import "../interfaces/ITreasuryManager.sol";
 import "../interfaces/ITreasury.sol";

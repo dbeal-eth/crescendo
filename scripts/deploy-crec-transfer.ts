@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { BigNumber, ethers as Ethers } from "ethers";
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 
 import { Treasury } from '../typechain/Treasury';
 import { CrecTransfer } from '../typechain/CrecTransfer';

@@ -3,7 +3,7 @@ import { expect, use } from 'chai';
 
 import {deployMockContract, MockContract, solidity} from 'ethereum-waffle';
 
-import { ethers } from '@nomiclabs/buidler';
+import { ethers } from 'hardhat';
 import { ethers as Ethers } from 'ethers';
 
 import { CrecUniswap } from '../typechain/CrecUniswap';
@@ -67,7 +67,7 @@ describe("CrecUniswap", function() {
   it('adds authorized pair', async () => {
 
     // create an uniswap pair
-    uniswapPair = await deployMockContract(signer, require('../artifacts/IUniswapV2Pair.json').abi);
+    uniswapPair = await deployMockContract(signer, require('../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json').abi);
 
     await uniswapPair.mock.token0.returns(contracts.tokA.address);
     await uniswapPair.mock.token1.returns(contracts.tokB.address);

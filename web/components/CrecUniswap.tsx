@@ -12,7 +12,7 @@ import CREC_UNISWAP_DATA = require('../../artifacts/CrecUniswap.json');
 //@ts-ignore
 import IERC20_DATA = require('../../artifacts/IERC20.json');
 //@ts-ignore
-import UNISWAP_PAIR_DATA = require('../../artifacts/IUniswapV2Pair.json');
+import UNISWAP_PAIR_DATA = require('../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json');
 import { getAddresses } from '../addresses';
 
 const UNISWAP_FEE = 0.003;

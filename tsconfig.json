@@ -1,22 +1,19 @@
 {
     "compilerOptions": {
-      "target": "es5",
+      "target": "es2018",
       "module": "commonjs",
       "allowSyntheticDefaultImports": true,
       "moduleResolution": "node",
       "strict": true,
       "esModuleInterop": true,
       "outDir": "dist",
-      "resolveJsonModule": false,
+      "resolveJsonModule": true,
       "jsx": "react",
       "noImplicitAny": false,
       "sourceMap": true
     },
     "include": ["./scripts", "./test", "./web", "webpack.config.js"],
     "files": [
-        "./buidler.config.ts",
-        "./node_modules/@nomiclabs/buidler-ethers/src/type-extensions.d.ts",
-        "./node_modules/@nomiclabs/buidler-waffle/src/type-extensions.d.ts",
-        "node_modules/buidler-typechain/src/type-extensions.d.ts",
+        "./hardhat.config.ts"
     ]
 }

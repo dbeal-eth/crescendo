@@ -186,7 +186,7 @@ contract Treasury is ITreasury, ConfigurableRightsPool {
     }
     
 
-    /** buidler seems to have a problem with anything inside this function. or something.
+    /** hardhat seems to have a problem with anything inside this function. or something.
         so for now its empty. TODO */
     receive() external virtual payable {}
 
