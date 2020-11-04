@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "lbp/interfaces/IERC20.sol";
 
-import "../interfaces/ITreasuryManager.sol";
 import "../interfaces/ITreasury.sol";
 
 struct Pair {
@@ -18,7 +17,7 @@ struct Pair {
     address dst;
 }
 
-contract CrecUniswap is ITreasuryManager, Ownable {
+contract CrecUniswap is Ownable {
 
     // minimum trade relative to the size of the fee, not including the fee
     uint256 constant MIN_TRADE_FACTOR = 3;
@@ -69,14 +68,6 @@ contract CrecUniswap is ITreasuryManager, Ownable {
         lastFeeAmount = 100000 * uint128(tx.gasprice);
         
         nextId = 1;
-    }
-
-    function getMaxSpend(bytes memory data) public override returns (uint256) {
-        // parse calldata args
-        uint16 pair = uint16At(data, 0);
-        uint256 count = uint256At(data, 0x4);
-
-        return getReward(pair, count);
     }
 
     function getReward(uint16 pair, uint count) internal view returns (uint256) {

@@ -6,6 +6,7 @@ import type { IRelayRecipient} from '../../typechain/IRelayRecipient';
 import type { FiatTokenV2 } from '../../typechain/FiatTokenV2';
 
 import { RelayProvider, resolveConfigurationGSN } from '@opengsn/gsn';
+import Biconomy from '@biconomy/mexa';
 
 import { signERC2612Permit } from 'eth-permit';
 
@@ -16,7 +17,7 @@ import CREC_TRANSFER_DATA = require('../../artifacts/CrecTransfer.json');
 //@ts-ignore
 import FIATTOKENV2_DATA = require('../../artifacts/FiatTokenV2.json');
 
-import { getAddresses } from '../addresses';
+import { getAddresses, getBiconomyKey } from '../networks';
 
 interface TokenInfo {
   name: string,
@@ -44,6 +45,7 @@ function createCrecendoApproval(amt: string, toId: number, idx: number) {
 function CrecTransfer() {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>();
   const [gsnProvider, setGsnProvider] = useState<ethers.providers.Web3Provider | null>();
+  const [biconomyProvider, setBiconomyProvider] = useState<ethers.providers.Web3Provider | null>();
 
   const [contractInfo, setContractInfo] = useState<CrecTransferContractInfo|null>();
   const [pairInfo, setPairInfo] = useState<PairInfo|null>();
@@ -116,6 +118,12 @@ function CrecTransfer() {
 
       setContractInfo(newContractInfo);
       setGsnProvider(new ethers.providers.Web3Provider(new RelayProvider(provider.provider as any, configuration) as any));
+
+      const biconomyConfig = {
+        apiKey: getBiconomyKey(provider.network)
+      };
+
+      setBiconomyProvider(new ethers.providers.Web3Provider(new Biconomy(provider.provider, biconomyConfig)));
 
       if(tokens.length)
         setSelectedToken(newContractInfo.tokens[0]);

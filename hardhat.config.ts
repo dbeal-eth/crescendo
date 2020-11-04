@@ -18,8 +18,8 @@ const hhConfig: any = {
 
   networks: {
     hardhat: {
-      blockGasLimit: 100000000,
-      allowUnlimitedContractSize: true
+      //blockGasLimit: 100000000,
+      //allowUnlimitedContractSize: true
     },
     local: {
       url: `http://localhost:8545`

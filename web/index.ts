@@ -23,8 +23,8 @@ import CrecTransfer from "./components/CrecTransfer";
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-//ReactDOM.render(React.createElement(CrecUniswap), document.querySelector('#crecUniswap'));
+ReactDOM.render(React.createElement(CrecUniswap), document.querySelector('#crecUniswap'));
 
-ReactDOM.render(React.createElement(CrecTransfer), document.querySelector('#crecTransfer'));
+//ReactDOM.render(React.createElement(CrecTransfer), document.querySelector('#crecTransfer'));
 
 //});

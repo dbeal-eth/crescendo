@@ -10,7 +10,6 @@ import "@opengsn/gsn/contracts/interfaces/IPaymaster.sol";
 import "@opengsn/gsn/contracts/interfaces/IRelayHub.sol";
 
 import "./interfaces/ITreasury.sol";
-import "./interfaces/ITreasuryManager.sol";
 
 //import "@openzeppelin/contracts/math/SafeMath.sol";
 

@@ -51,11 +51,9 @@ export async function runBotExec(crec: CrecTransfer, token: Token, options: any 
         return null;
 
     // TODO: should sort array by amounts
-    console.log(addrs);
+    console.log('processing addrs', addrs);
 
     const finalAddrs = Array.from(addrs);
-
-    await crec.mark(token.address, finalAddrs[0]);
 
     const txn = await crec.exec(token.address, finalAddrs);
 

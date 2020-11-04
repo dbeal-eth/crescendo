@@ -7,12 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "lbp/interfaces/IERC20.sol";
 
-import "../interfaces/ITreasuryManager.sol";
 import "../interfaces/ITreasury.sol";
 
 import "@opengsn/gsn/contracts/interfaces/IRelayRecipient.sol";
 
-contract CrecTransfer is ITreasuryManager, IRelayRecipient, Ownable {
+contract CrecTransfer is IRelayRecipient, Ownable {
 
     int256 constant TREASURY_TARGET_PERIOD = 7 * 24 * 60 * 60; // 1 week
 
@@ -134,14 +133,6 @@ contract CrecTransfer is ITreasuryManager, IRelayRecipient, Ownable {
         require(idx > block.number, "block number is too high");
 
         return (addr, allowanceData & 0xffffffffffffffffffffffffffffffff);
-    }
-
-    function getMaxSpend(bytes memory data) public override returns (uint256) {
-        // parse calldata args
-        address token = address(uint256At(data, 0));
-        uint256 count = uint256At(data, 256);
-
-        return getReward(token, count);
     }
 
     function getReward(address token, uint count) internal view returns (uint256) {

@@ -11,6 +11,7 @@ import { Treasury } from '../typechain/Treasury';
 import { TreasuryFactory } from '../typechain/TreasuryFactory';
 
 import { Ierc20 } from '../typechain/Ierc20';
+import { TokenFactory } from '../typechain/TokenFactory';
 // something is wrong with the generated code for ierc20factory, tsc does not like
 //import { Ierc20Factory } from '../typechain/Ierc20Factory'
 //const Ierc20Factory = require('../typechain/Ierc20Factory');
@@ -133,12 +134,18 @@ if(module == require.main) {
             console.error('BFactory address not supplied');
             return;
         }
-        
-        const tokens: [string, BigNumber][] = process.env.TOKENS!.split(',').map(p => {
-            const parts = p.split('=')
 
-            return [parts[0], ethers.utils.parseEther(parts[1])];
-        });
+        const tokens: [string, BigNumber][] = [];
+
+        for(const p of process.env.TOKENS!.split(',')) {
+            const parts = p.split('=');
+
+            const tokenContract = TokenFactory.connect(parts[0], signer);
+
+            const decimals = await tokenContract.decimals();
+
+            tokens.push([parts[0], ethers.utils.parseEther(parts[1]).mul(BigNumber.from(10).pow(decimals)).div(BigNumber.from(10).pow(18))]);
+        }
 
         if(tokens.length < 2) {
             console.error('at least 2 tokens must be supplied');
@@ -152,7 +159,7 @@ if(module == require.main) {
         else {
             const libs = await deployLibs(signer);
 
-            console.log('libs:', libs);
+            //console.log('libs:', libs);
     
             treas = await deployTreasuryWithPoolNoFactory(
                 signer,
@@ -161,7 +168,8 @@ if(module == require.main) {
                 tokens
             );
             
-            console.log('treasury deployed:', treas.address);
+            console.log(treas.address);
+            //console.log('treasury deployed:', treas.address);
         }
 
         if(process.env.FORWARDER) {

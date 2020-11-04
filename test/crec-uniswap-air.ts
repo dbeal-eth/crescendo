@@ -18,17 +18,11 @@ import { TokenFactory } from '../typechain/TokenFactory';
 
 use(solidity);
 
-function createCrecendoApproval(amt: string, idx: number) {
-  let v = ethers.utils.parseEther(amt)
-  
-  // bottom 4 bytes are reserved for data
-  const mask = ethers.BigNumber.from(Math.pow(2, 32));
-  v = v.add(mask.sub(v.mod(mask)));
-
-  // add the idx (bottom 16)
-  v = v.add(idx);
-  
-  return v;
+function createCrecendoApproval(amt: string, id: number, deadline: number, minTradeAmount = '0') {
+  return ethers.utils.parseEther(amt)
+    .add(ethers.BigNumber.from(deadline).shl(128))
+    .add(ethers.BigNumber.from(id).shl(160))
+    .add(ethers.utils.parseEther(minTradeAmount).shl(176));
 }
 
 describe("CrecUniswapAir", function() {
@@ -72,7 +66,7 @@ describe("CrecUniswapAir", function() {
     await uniswapPair.mock.token0.returns(contracts.tokA.address);
     await uniswapPair.mock.token1.returns(contracts.tokB.address);
 
-    const txn = crecUniswap.addAuthorizedPair(uniswapPair.address);
+    const txn = crecUniswap.addAuthorizedPair(uniswapPair.address, ethers.utils.parseUnits('1', 'gwei'));
     
     expect(txn)
       .to.emit(crecUniswap, 'NewAuthorizedPair');
@@ -80,38 +74,11 @@ describe("CrecUniswapAir", function() {
     //await txn.wait(1);
   });
 
-  it('marks after approval', async () => {
-
-    const signers = await (<any>ethers).getSigners();
-
-    //const txn = await crecUniswap.mark(1, signers[1]);
-
-    expect(crecUniswap.mark(1, await signers[1].getAddress())).to.be.reverted;
-
-    //await txn.wait(1);
-
-    // send some tokA and tokB to both
-    await contracts.tokA.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.tokB.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.tokA.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.tokB.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.tokA.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.tokB.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
-
-    // they all approve stuff
-    await new TokenFactory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1));
-    await new TokenFactory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 2));
-    await new TokenFactory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1));
-    await new TokenFactory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  2));
-    await new TokenFactory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1));
-    await (await new TokenFactory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 2))).wait(1);
-
-    await crecUniswap.mark(1, await signers[1].getAddress());
-  });
-
+  // currently skipped because I cannot figure out why the provider commands are not working as expected
   it.skip('calculates reward', async () => {
-
     // get initial reward
+    await ethers.provider.send('evm_increaseTime', [5000]);
+    await ethers.provider.send('evm_mine', []);
     await ethers.provider.send('evm_mine', []);
     const reward1 = await crecUniswap.getReward(1, 3);
 
@@ -120,13 +87,13 @@ describe("CrecUniswapAir", function() {
     // after blocks pass, reward should be gradually increasing
     await ethers.provider.send('evm_mine', []);
     const reward2 = await crecUniswap.getReward(1, 3);
-    expect(reward2).to.be.gt(reward1, 'reward should increase as blocks pass');
+    expect(reward2).to.be.gt(reward1, 'reward should increase as aws pass');
 
     // linear increase
     await ethers.provider.send('evm_mine', []);
     const reward3 = await crecUniswap.getReward(1, 3);
     const exp = reward2.add(reward2.sub(reward1));
-    expect(reward3.div(3)).to.eql(exp.div(3).add(1));
+    expect(reward3.div(10)).to.eql(exp.div(10));
   });
 
   it('runs the trade sequence', async () => {
@@ -136,8 +103,22 @@ describe("CrecUniswapAir", function() {
     await uniswapPair.mock.getReserves.returns(ethers.utils.parseEther('100'), ethers.utils.parseEther('100'), 0);
     await uniswapPair.mock.swap.returns();
 
+    await contracts.tokA.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.tokB.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.tokA.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.tokB.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.tokA.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.tokB.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
+
+    // they all approve stuff
+    await new TokenFactory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1, 10000));
+    await new TokenFactory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1, 10000));
+    await new TokenFactory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1, 10000));
+
     // send some fake money for the return
     await contracts.tokB.transfer(crecUniswap.address, ethers.utils.parseEther('100'));
+
+    // test going one way
 
     await crecUniswap.exec(1, [
       await signers[1].getAddress(),
@@ -147,17 +128,58 @@ describe("CrecUniswapAir", function() {
 
     expect(await contracts.tokA.balanceOf(uniswapPair.address)).to.be.gt(ethers.utils.parseEther('6'));
 
+    // test the other way
+    await new TokenFactory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 1, 10000));
+    await new TokenFactory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  1, 10000));
+    await new TokenFactory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 1, 10000));
+
     await contracts.tokA.transfer(crecUniswap.address, ethers.utils.parseEther('100'));
 
-    // still need to mark 2
-    await crecUniswap.mark(2, await signers[1].getAddress());
-
-    await crecUniswap.exec(2, [
+    await crecUniswap.exec(1, [
       await signers[1].getAddress(),
       await signers[2].getAddress(),
       await signers[3].getAddress()
     ]);
 
     expect(await contracts.tokB.balanceOf(uniswapPair.address)).to.be.gt(ethers.utils.parseEther('54'));
+
+    console.log('done with 2');
+
+    // now test both ways with airswap
+    await contracts.tokB.transfer(await signers[4].getAddress(), ethers.utils.parseEther('1'));
+    await contracts.tokA.transfer(await signers[5].getAddress(), ethers.utils.parseEther('2'));
+    await contracts.tokB.transfer(await signers[6].getAddress(), ethers.utils.parseEther('3'));
+
+
+    await new TokenFactory(signers[4]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('1', 1, 10000));
+    await new TokenFactory(signers[5]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2', 1, 10000));
+    await new TokenFactory(signers[6]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('3', 1, 10000));
+
+    const prevUniTokenA = await contracts.tokA.balanceOf(uniswapPair.address);
+
+    await crecUniswap.exec(1, [
+      await signers[4].getAddress(),
+      await signers[5].getAddress(),
+      await signers[6].getAddress()
+    ]);
+
+    expect(await contracts.tokB.balanceOf(signers[4].getAddress())).to.eq(ethers.BigNumber.from(0));
+    expect(await contracts.tokA.balanceOf(signers[5].getAddress())).to.eq(ethers.BigNumber.from(0));
+    expect(await contracts.tokB.balanceOf(signers[6].getAddress())).to.eq(ethers.BigNumber.from(0));
+
+    expect(await contracts.tokA.balanceOf(signers[4].getAddress())).to.be.gt(ethers.utils.parseEther('0.95'));
+    expect(await contracts.tokB.balanceOf(signers[5].getAddress())).to.be.gt(ethers.utils.parseEther('1.9'));
+    expect(await contracts.tokA.balanceOf(signers[6].getAddress())).to.be.gt(ethers.utils.parseEther('2.85'));
+
+    // since this is an air transaction, no A tokens should have been sent to uniswap
+    expect(await contracts.tokA.balanceOf(uniswapPair.address)).to.be.eq(prevUniTokenA);
+  });
+
+  it('can claim owed', async () => {
+    const balBefore = await contracts.weth.balanceOf(await signer.getAddress());
+
+    await crecUniswap.claim(await signer.getAddress());
+
+    expect(await contracts.weth.balanceOf(await signer.getAddress())).to.be.gt(balBefore);
   });
 });
