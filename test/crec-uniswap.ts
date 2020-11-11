@@ -9,8 +9,8 @@ import { ethers as Ethers } from 'ethers';
 import { CrecUniswap } from '../typechain/CrecUniswap';
 import { CrecUniswapFactory } from '../typechain/CrecUniswapFactory';
 
-import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
-import { deployTreasury, deployTreasuryWithPool } from '../scripts/deploy-treasury';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
+import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 

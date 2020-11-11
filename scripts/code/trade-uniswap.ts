@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { ethers } from 'hardhat';
 import { BigNumber, ContractReceipt, Signer } from 'ethers';
 
-import { TokenFactory } from '../typechain/TokenFactory';
+import { TokenFactory } from '../../typechain/TokenFactory';
 
 export async function tradeUniswap(signer: Signer, routerAddress: string, pairAddresses: string[], amount: BigNumber): Promise<ContractReceipt|null> {
     // get list of addresses still requiring transactions to send

@@ -9,8 +9,8 @@ import { BigNumber, ethers as Ethers } from 'ethers';
 import { CrecTransfer } from '../typechain/CrecTransfer';
 import { CrecTransferFactory } from '../typechain/CrecTransferFactory';
 
-import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
-import { deployTreasuryWithPool } from '../scripts/deploy-treasury';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
+import { deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 

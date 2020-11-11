@@ -4,10 +4,10 @@ import { BigNumber, ethers as Ethers } from "ethers";
 
 import { ethers } from 'hardhat';
 
-import { Treasury } from '../typechain/Treasury';
-import { CrecTransfer } from '../typechain/CrecTransfer';
-import { CrecTransferFactory } from '../typechain/CrecTransferFactory';
-import { TreasuryFactory } from '../typechain/TreasuryFactory';
+import { Treasury } from '../../typechain/Treasury';
+import { CrecTransfer } from '../../typechain/CrecTransfer';
+import { CrecTransferFactory } from '../../typechain/CrecTransferFactory';
+import { TreasuryFactory } from '../../typechain/TreasuryFactory';
 
 const STARTING_WEIGHT = ethers.utils.parseEther('10');
 

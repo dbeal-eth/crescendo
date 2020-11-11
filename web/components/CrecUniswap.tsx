@@ -8,11 +8,11 @@ import type { Ierc20 } from '../../typechain/Ierc20';
 import InitWallet from './InitWallet';
 
 //@ts-ignore
-import CREC_UNISWAP_DATA = require('../../artifacts/CrecUniswapAir.json');
+import CREC_UNISWAP_DATA = require('../../artifacts/contracts/Crescendo.sol/Crescendo.json');
 //@ts-ignore
-import IERC20_DATA = require('../../artifacts/IERC20.json');
+import IERC20_DATA = require('../../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json');
 //@ts-ignore
-import UNISWAP_PAIR_DATA = require('../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json');
+import UNISWAP_PAIR_DATA = require('../../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json');
 import { getAddresses } from '../networks';
 
 const UNISWAP_FEE = 0.003;
@@ -127,13 +127,13 @@ function CrecUniswap() {
         return;
       }
 
-      const crecUniswap = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, CREC_UNISWAP_DATA).abi as unknown as CrecUniswapContract;
+      const crecUniswap = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, CREC_UNISWAP_DATA.abi) as unknown as CrecUniswapContract;
 
       // get fee
       const crecFee = (await crecUniswap.pairFee(selectedPair)).toNumber();
   
       // get trading rate
-      const uniswapPair = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, UNISWAP_PAIR_DATA).abi as unknown as IUniswapV2Pair;
+      const uniswapPair = new ethers.Contract(getAddresses(await provider.getNetwork()).crecUniswap, UNISWAP_PAIR_DATA.abi) as unknown as IUniswapV2Pair;
   
       const reserves = await uniswapPair.getReserves();
   

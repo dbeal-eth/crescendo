@@ -6,20 +6,20 @@ import { ethers } from 'hardhat';
 
 import { ethers as Ethers } from "ethers";
 
-import { RightsManagerFactory } from '../typechain/RightsManagerFactory';
-import { SmartPoolManagerFactory } from '../typechain/SmartPoolManagerFactory';
+import { RightsManagerFactory } from '../../typechain/RightsManagerFactory';
+import { SmartPoolManagerFactory } from '../../typechain/SmartPoolManagerFactory';
 
-import { BFactoryFactory } from '../typechain/BFactoryFactory';
-import { BFactory } from '../typechain/BFactory';
+import { BFactoryFactory } from '../../typechain/BFactoryFactory';
+import { BFactory } from '../../typechain/BFactory';
 
-import { RelayHubFactory } from '../typechain/RelayHubFactory';
-import { RelayHub } from '../typechain/RelayHub';
+import { RelayHubFactory } from '../../typechain/RelayHubFactory';
+import { RelayHub } from '../../typechain/RelayHub';
 
-import { TokenFactory } from '../typechain/TokenFactory';
-import { Token } from '../typechain/Token';
+import { TokenFactory } from '../../typechain/TokenFactory';
+import { Token } from '../../typechain/Token';
 
-import { Weth9Factory } from '../typechain/Weth9Factory'
-import { Weth9 } from '../typechain/Weth9';
+import { Weth9Factory } from '../../typechain/Weth9Factory'
+import { Weth9 } from '../../typechain/Weth9';
 
 const RELAY_HUB_CONFIG = {
   gasOverhead: 35965,

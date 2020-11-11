@@ -47,8 +47,6 @@ contract CrecUniswapAir is Crescendo {
     // uniswap pairs which may be exchanged by this contract
     mapping(uint16 => Pair) public authorizedPairs;
 
-    event NewAuthorizedPair(uint16 id, address src, address dst, address uniswapPair);
-
     constructor(address _treasury, uint32 _targetInterval, uint128 _targetTreasuryBalance) public {
         treasury = _treasury;
         targetInterval = _targetInterval;
@@ -76,7 +74,7 @@ contract CrecUniswapAir is Crescendo {
         IERC20(token0).approve(treasury, type(uint256).max);
         IERC20(token1).approve(treasury, type(uint256).max);
 
-        emit NewAuthorizedPair(nextId - 1, p0.src, p0.dst, p0.uniswapPair);
+        emit NewAuthorizedOp(nextId - 1, token0, token1, address(0));
     }
 
     function getReward(uint16 pair, uint count) public view override returns (uint256) {
@@ -116,7 +114,7 @@ contract CrecUniswapAir is Crescendo {
         return reward;
     }
 
-    function calculateTradeValue(address addr, uint16 pair, address payer) internal returns (uint256) {
+    function calculateApproveValue(address addr, uint16 pair, address payer) internal override returns (uint256) {
         Pair memory p = authorizedPairs[pair];
 
         uint256 allowanceData = IERC20(addr).allowance(payer, address(this));
@@ -174,7 +172,7 @@ contract CrecUniswapAir is Crescendo {
                 amts.feeToPay = fee * amts.validAddrs;
 
                 for(uint i = 0;i < addrs.length;i++) {
-                    inAmounts0[i] = calculateTradeValue(token0, pair, addrs[i]);
+                    inAmounts0[i] = calculateApproveValue(token0, pair, addrs[i]);
                     if(inAmounts0[i] > 0) {
                         console.log("deduct from 0 ", inAmounts0[i]);
                         amts.totalIn0 += inAmounts0[i];
@@ -182,7 +180,7 @@ contract CrecUniswapAir is Crescendo {
                         continue;
                     }
 
-                    inAmounts1[i] = inAmounts0[i] > 0 ? 0 : calculateTradeValue(token1, pair, addrs[i]);
+                    inAmounts1[i] = inAmounts0[i] > 0 ? 0 : calculateApproveValue(token1, pair, addrs[i]);
 
                     if(inAmounts1[i] > 0) {
                         console.log("deduct from 1 ", inAmounts1[i]);

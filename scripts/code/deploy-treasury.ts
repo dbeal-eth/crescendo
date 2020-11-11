@@ -6,12 +6,12 @@ import { ethers } from 'hardhat';
 
 import { deployLibs, EnvLibs } from './deploy-env';
 
-import { CrpTreasuryFactoryFactory } from '../typechain/CrpTreasuryFactoryFactory';
-import { Treasury } from '../typechain/Treasury';
-import { TreasuryFactory } from '../typechain/TreasuryFactory';
+import { CrpTreasuryFactoryFactory } from '../../typechain/CrpTreasuryFactoryFactory';
+import { Treasury } from '../../typechain/Treasury';
+import { TreasuryFactory } from '../../typechain/TreasuryFactory';
 
-import { Ierc20 } from '../typechain/Ierc20';
-import { TokenFactory } from '../typechain/TokenFactory';
+import { Ierc20 } from '../../typechain/Ierc20';
+import { TokenFactory } from '../../typechain/TokenFactory';
 // something is wrong with the generated code for ierc20factory, tsc does not like
 //import { Ierc20Factory } from '../typechain/Ierc20Factory'
 //const Ierc20Factory = require('../typechain/Ierc20Factory');
@@ -24,7 +24,7 @@ export async function deployTreasuryWithPool(signer: Ethers.Signer, libs: EnvLib
 
     for(const token of tokens) {
         // typescript has some sort of issue with the generated code for IERC20
-        const ctrct = await (await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer));
+        const ctrct = await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer);
         
         const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256) as Ierc20;
 
@@ -39,6 +39,8 @@ export async function deployTreasuryWithPool(signer: Ethers.Signer, libs: EnvLib
 }
 
 export async function deployTreasuryWithPoolNoFactory(signer: Ethers.Signer, libs: EnvLibs, bfactoryAddress: string, tokens: [string, BigNumber][], options: any = {}): Promise<Treasury> {
+
+    //await new Promise((resolve, reject) => { setTimeout(reject, 100000) })
 
     const treasury = await new TreasuryFactory(libs, signer).deploy(bfactoryAddress, {
         poolTokenSymbol: options.poolTokenSymbol || 'TREAS',
@@ -55,19 +57,33 @@ export async function deployTreasuryWithPoolNoFactory(signer: Ethers.Signer, lib
         canWhitelistLPs: true,
         canChangeCap: true,
       })
+    
+    console.log('sent the treasury');
 
     for(const token of tokens) {
         // typescript has some sort of issue with the generated code for IERC20
-        const ctrct = await (await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer));
+        const ctrct = await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer);
+
+        console.log('one');
         
-        const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256) as Ierc20;
+        const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256);
+
+        console.log('two');
 
         await txn.wait(1);
+
+        console.log('three');
     }
+
+    console.log('got done with tokens approve');
 
     let txn = await treasury["createPool(uint256)"](ethers.utils.parseEther((10000).toString()));
 
+    console.log('doing it');
+
     await txn.wait(1);
+
+    console.log('created bpool');
 
     return treasury;
 }
@@ -158,8 +174,6 @@ if(module == require.main) {
         }
         else {
             const libs = await deployLibs(signer);
-
-            //console.log('libs:', libs);
     
             treas = await deployTreasuryWithPoolNoFactory(
                 signer,

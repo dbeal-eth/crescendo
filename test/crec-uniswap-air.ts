@@ -9,8 +9,8 @@ import { ethers as Ethers } from 'ethers';
 import { CrecUniswapAir } from '../typechain/CrecUniswapAir';
 import { CrecUniswapAirFactory } from '../typechain/CrecUniswapAirFactory';
 
-import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
-import { deployTreasury, deployTreasuryWithPool } from '../scripts/deploy-treasury';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
+import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 
@@ -69,7 +69,7 @@ describe("CrecUniswapAir", function() {
     const txn = crecUniswap.addAuthorizedPair(uniswapPair.address, ethers.utils.parseUnits('1', 'gwei'));
     
     expect(txn)
-      .to.emit(crecUniswap, 'NewAuthorizedPair');
+      .to.emit(crecUniswap, 'NewAuthorizedOp');
 
     //await txn.wait(1);
   });
@@ -182,4 +182,13 @@ describe("CrecUniswapAir", function() {
 
     expect(await contracts.weth.balanceOf(await signer.getAddress())).to.be.gt(balBefore);
   });
+
+  it('can fill', async() => {
+    const balBefore = await contracts.weth.balanceOf(await signer.getAddress());
+    const amt = ethers.utils.parseEther('0.1');
+    
+    await contracts.weth.approve(crecUniswap.address, amt);
+    await crecUniswap.fill(amt);
+    expect(await contracts.weth.balanceOf(await signer.getAddress())).to.be.lt(balBefore);
+  })
 });

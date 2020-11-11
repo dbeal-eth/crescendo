@@ -11,8 +11,8 @@ import { ethers as Ethers } from 'ethers';
 //import { ethers } from 'ethers';
 
 import { Treasury } from '../typechain/Treasury';
-import { EnvLibs, EnvContracts, deployEnv } from '../scripts/deploy-env';
-import { deployTreasury, deployTreasuryWithPool } from '../scripts/deploy-treasury';
+import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
+import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 use(solidity);
 

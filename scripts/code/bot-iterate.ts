@@ -4,10 +4,10 @@ import { BigNumber, ContractReceipt, ethers as Ethers } from "ethers";
 
 import { ethers } from 'hardhat';
 
-import { CrecTransfer } from '../typechain/CrecTransfer';
-import { CrecTransferFactory } from '../typechain/CrecTransferFactory';
-import { TokenFactory } from '../typechain/TokenFactory';
-import { Token } from '../typechain/Token';
+import { CrecTransfer } from '../../typechain/CrecTransfer';
+import { CrecTransferFactory } from '../../typechain/CrecTransferFactory';
+import { TokenFactory } from '../../typechain/TokenFactory';
+import { Token } from '../../typechain/Token';
 
 interface CrecTransferInfo {
     amt: BigNumber,

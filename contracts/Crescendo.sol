@@ -1,6 +1,7 @@
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+import "lbp/interfaces/IERC20.sol";
 import "./interfaces/ITreasury.sol";
 
 import "hardhat/console.sol";
@@ -29,6 +30,8 @@ abstract contract Crescendo is Ownable {
 
     mapping(address => uint256) public owedMoney;
     uint256 totalOwedMoney;
+
+    event NewAuthorizedOp(uint16 id, address token0, address token1, address token2);
 
     function updateFee(uint16 pair) internal {
         console.log("owed money", totalOwedMoney);
@@ -64,6 +67,22 @@ abstract contract Crescendo is Ownable {
         ITreasury(treasury).withdraw(ITreasury(treasury).getTreasuryToken(), addr, amt);
     }
 
+    // supply additional funds to the treasury in case it runs out of money
+    // this is an escape hatch and should not normally ever need to be called
+    function fill(uint256 amt) public {
+        address tok = ITreasury(treasury).getTreasuryToken();
+
+        IERC20(tok).transferFrom(msg.sender, address(this), amt);
+        IERC20(tok).approve(treasury, type(uint256).max);
+        ITreasury(treasury).deposit(tok, address(this), amt);
+    }
+
+    // used to implement logic of the batched transactions
     function execInternal(uint16 pair, address[] calldata addrs) internal virtual returns (uint256);
+
+    // used to check the value of the operation which has ben approved in execInternal. Should return >0 for any valid approval which should be processed, 0 otherwise
+    function calculateApproveValue(address addr, uint16 pair, address payer) internal virtual returns (uint256);
+
+    // used by bot and this abstract contract to determine payout value at current block
     function getReward(uint16 pair, uint count) public view virtual returns (uint256);
 }
