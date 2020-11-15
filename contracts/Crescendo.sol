@@ -34,7 +34,6 @@ abstract contract Crescendo is Ownable {
     event NewAuthorizedOp(uint16 id, address token0, address token1, address token2);
 
     function updateFee(uint16 pair) internal {
-        console.log("owed money", totalOwedMoney);
         uint currentTreasuryBalance = SafeMath.sub(ITreasury(treasury).getTreasuryBalance(), totalOwedMoney);
         uint newFee = SafeMath.mul(opInfo[pair].fee, uint256(targetTreasuryBalance)) / currentTreasuryBalance;
 
@@ -44,9 +43,13 @@ abstract contract Crescendo is Ownable {
     function exec(uint16 pair, address[] calldata addrs) public {
         uint256 startGas = gasleft();
 
-        uint256 batchSize = execInternal(pair, addrs);
-
-        uint256 reward = getReward(pair, batchSize);
+        uint256 reward;
+        if(addrs.length > 0) {
+            uint256 batchSize = execInternal(pair, addrs);
+            reward = getReward(pair, batchSize);
+        } else {
+            reward = getReward(pair, 0);
+        }
 
         // update fee
         updateFee(pair);
@@ -80,8 +83,11 @@ abstract contract Crescendo is Ownable {
     // used to implement logic of the batched transactions
     function execInternal(uint16 pair, address[] calldata addrs) internal virtual returns (uint256);
 
+    // used to get the op ID for an operation approved in execInternal. Should return >1 for any valid operation ID
+    function calculateOpId(uint256 amt) public pure virtual returns (uint16);
+
     // used to check the value of the operation which has ben approved in execInternal. Should return >0 for any valid approval which should be processed, 0 otherwise
-    function calculateApproveValue(address addr, uint16 pair, address payer) internal virtual returns (uint256);
+    function calculateApproveValue(address addr, uint16 pair, address payer) public view virtual returns (uint256);
 
     // used by bot and this abstract contract to determine payout value at current block
     function getReward(uint16 pair, uint count) public view virtual returns (uint256);

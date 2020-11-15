@@ -4,10 +4,12 @@ import { BigNumber, ContractReceipt, ethers as Ethers } from "ethers";
 
 import { ethers } from 'hardhat';
 
-import { CrecTransfer } from '../../typechain/CrecTransfer';
-import { CrecTransferFactory } from '../../typechain/CrecTransferFactory';
+import { Crescendo } from '../../typechain/Crescendo';
 import { TokenFactory } from '../../typechain/TokenFactory';
 import { Token } from '../../typechain/Token';
+
+//@ts-ignore
+import CRESCENDO_DATA = require('../../artifacts/contracts/Crescendo.sol/Crescendo.json');
 
 interface CrecTransferInfo {
     amt: BigNumber,
@@ -17,14 +19,16 @@ interface CrecTransferInfo {
 function parseCrecTransfer(n: BigNumber): CrecTransferInfo {
     return {
         amt: n.shl(64).shl(64),
-        toIdx: n.shr(224).toNumber()
+        toIdx: n.shr(160).mask(0xffff).toNumber()
     }
 }
 
 const STARTING_WEIGHT = ethers.utils.parseEther('10');
 
-export async function runBotExec(crec: CrecTransfer, token: Token, options: any = {}): Promise<ContractReceipt|null> {
+export async function runBotExec(crec: Crescendo, token: Token, pairId: number, options: any = {}): Promise<ContractReceipt|null> {
     // get list of addresses still requiring transactions to send
+
+    console.log('do stuff');
 
     const filter = token.filters.Approval(null, crec.address, null);
 
@@ -36,10 +40,21 @@ export async function runBotExec(crec: CrecTransfer, token: Token, options: any 
     for(const e of events) {
         if(!e.args)
             continue;
+        
+        // get the actual current approve value
+        const val = await token.allowance(e.args[0], crec.address);
 
-        console.log(parseCrecTransfer(e.args[2]));
+        const opId = await crec.calculateOpId(val);
 
-        if(e.args[1] == crec.address && parseCrecTransfer(e.args[2]).amt.gt(0)) {
+        if(opId != pairId)
+            continue;
+
+        const valid = await crec.calculateApproveValue(token.address, opId, e.args[0]);
+        console.log('found approve value', ethers.utils.formatEther(valid));
+
+        //console.log(parseCrecTransfer(e.args[2]));
+
+        if(e.args[1] == crec.address && !valid.isZero()) {
             addrs.add(e.args[0]);
         }
         else {
@@ -55,7 +70,9 @@ export async function runBotExec(crec: CrecTransfer, token: Token, options: any 
 
     const finalAddrs = Array.from(addrs);
 
-    const txn = await crec.exec(token.address, finalAddrs);
+    const txn = await crec.exec(pairId, finalAddrs, {gasLimit: 400000 });
+
+    console.log(txn.hash);
 
     const res = txn.wait();
 
@@ -69,10 +86,13 @@ if(module == require.main) {
 
         const signer = (await ethers.getSigners())[0];
 
-        const crecAddress = process.env.CREC_TRANSFER!;
+        const crecAddress = process.env.CREC!;
         const tokenAddress = process.env.TOKEN!;
+        const pairId = parseInt(process.env.PAIR_ID!);
 
-        const rcpt = await runBotExec(CrecTransferFactory.connect(crecAddress, signer), TokenFactory.connect(tokenAddress, signer));
+        const crec = new ethers.Contract(crecAddress, CRESCENDO_DATA.abi, signer) as unknown as Crescendo;
+
+        const rcpt = await runBotExec(crec, TokenFactory.connect(tokenAddress, signer), pairId);
 
         if(rcpt) {
             console.log('txn status:', rcpt.status);

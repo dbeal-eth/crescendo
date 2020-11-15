@@ -9,5 +9,5 @@ export TOKEN_WETH=0xd0a1e359811322d97991e03f863a0c30c2cf029c
 export TOKEN_MKR=0xaaf64bfcc32d0f15873a02163e7e500671a4ffcd
 export TOKEN_DAI=0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa
 
-TOKENS=$TOKEN_WETH=0.2,$TOKEN_MKR=0.2,$TOKEN_DAI=10 npx hardhat --network kovan run scripts/code/deploy-treasury.ts
+TOKENS=$TOKEN_WETH=0.2,$TOKEN_MKR=0.099,$TOKEN_DAI=1 npx hardhat --network kovan run scripts/code/deploy-treasury.ts
 #TOKENS=0x5bcb88A0d20426e451332eE6C4324b0e663c50E0,0x53369fd4680FfE3DfF39Fc6DDa9CfbfD43daeA2E,0xB00cC45B4a7d3e1FEE684cFc4417998A1c183e6d npx hardhat --network local run scripts/deploy-crec-uniswap.ts

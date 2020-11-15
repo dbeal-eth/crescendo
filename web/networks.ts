@@ -7,7 +7,7 @@ const ADDRESSES = {
         crecTransfer: '0x78Aeff0658Fa67735fBF99Ce7CDB01Fe5D520259'
     },
     'kovan': {
-        crecUniswap: '0xF24cd28e9b928d5D4a1C9bAb55de18a39f7c4f4b',
+        crecUniswap: '0x592D9e6D867Eae6dfCaB6F814F1F88626aC9ecC1',
         crecTransfer: '0x3114c4611Cd06eCC640ca0642985BC2Be5Ebff33'
     }
 }

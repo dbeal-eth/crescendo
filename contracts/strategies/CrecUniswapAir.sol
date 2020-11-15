@@ -74,7 +74,7 @@ contract CrecUniswapAir is Crescendo {
         IERC20(token0).approve(treasury, type(uint256).max);
         IERC20(token1).approve(treasury, type(uint256).max);
 
-        emit NewAuthorizedOp(nextId - 1, token0, token1, address(0));
+        emit NewAuthorizedOp(nextId - 1, token0, token1, pair);
     }
 
     function getReward(uint16 pair, uint count) public view override returns (uint256) {
@@ -86,11 +86,6 @@ contract CrecUniswapAir is Crescendo {
         OpInfo memory info = opInfo[pair];
 
         uint curtime = block.timestamp;
-
-        console.log("CURTIME", curtime);
-        console.log("LASTTIME", info.lastTime);
-
-        console.log("TIME DIFF", curtime - info.lastTime);
 
         // calculate the base reward for a single address
         // reward should be = to opFee WHEN target process time is equal to now
@@ -114,13 +109,17 @@ contract CrecUniswapAir is Crescendo {
         return reward;
     }
 
-    function calculateApproveValue(address addr, uint16 pair, address payer) internal override returns (uint256) {
+    function calculateOpId(uint256 amt) public pure override returns (uint16) {
+        return uint16(amt >> 160);
+    }
+
+    function calculateApproveValue(address addr, uint16 pair, address payer) public view override returns (uint256) {
         Pair memory p = authorizedPairs[pair];
 
         uint256 allowanceData = IERC20(addr).allowance(payer, address(this));
 
         uint80 minTradeAmount = uint80(allowanceData >> 176);
-        uint16 pairId = uint16(allowanceData >> 160);
+        uint16 pairId = calculateOpId(allowanceData);
         uint32 deadline = uint32(allowanceData >> 128);
 
         uint128 amt = uint128(allowanceData);
@@ -212,7 +211,7 @@ contract CrecUniswapAir is Crescendo {
                     uint traded = amts.totalIn0 - amts.cover0 - amts.feeToPay + amts.feeToPay * amts.totalIn1 * reserve0 / (amts.totalIn0 * reserve1);
 
                     IERC20(token0).transfer(p.uniswapPair, traded);
-                    uniPair.swap(0, getUniswapAmountOut(traded, reserve0, reserve1), address(this), "0x");
+                    uniPair.swap(0, getUniswapAmountOut(traded, reserve0, reserve1), address(this), "");
 
                     amts.cover0 = amts.totalIn0 - traded - amts.feeToPay;
                     amts.cover1 = amts.totalIn1 + getUniswapAmountOut(traded, reserve0, reserve1);
@@ -224,7 +223,7 @@ contract CrecUniswapAir is Crescendo {
                     uint traded = amts.totalIn1 - amts.cover1 - amts.feeToPay + amts.feeToPay * amts.totalIn0 * reserve1 / (amts.totalIn1 * reserve0);
 
                     IERC20(token1).transfer(p.uniswapPair, traded);
-                    uniPair.swap(getUniswapAmountOut(traded, reserve1, reserve0), 0, address(this), "0x");
+                    uniPair.swap(getUniswapAmountOut(traded, reserve1, reserve0), 0, address(this), "");
 
                     amts.cover0 = amts.totalIn0 + getUniswapAmountOut(traded, reserve1, reserve0);
                     amts.cover1 = amts.totalIn1 - traded - amts.feeToPay;

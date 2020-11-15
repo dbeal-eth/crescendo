@@ -96,9 +96,19 @@ describe("CrecUniswapAir", function() {
     expect(reward3.div(10)).to.eql(exp.div(10));
   });
 
-  it('runs the trade sequence', async () => {
+  it('runs empty trade sequence', async () => {
+    await crecUniswap.exec(1, []);
+  });
 
+  it('calculates op id', async () => {
+    expect(await crecUniswap.calculateOpId(createCrecendoApproval('1',  54, 10000))).to.eql(54);
+  });
+
+  it('detects correct trade values', async () => {
+    
     const signers = await (<any>ethers).getSigners();
+
+    expect(await crecUniswap.calculateApproveValue(contracts.tokA.address, 1, await signers[1].getAddress())).to.eq(ethers.constants.Zero);
 
     await uniswapPair.mock.getReserves.returns(ethers.utils.parseEther('100'), ethers.utils.parseEther('100'), 0);
     await uniswapPair.mock.swap.returns();
@@ -114,6 +124,14 @@ describe("CrecUniswapAir", function() {
     await new TokenFactory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1, 10000));
     await new TokenFactory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1, 10000));
     await new TokenFactory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1, 10000));
+
+    expect(await crecUniswap.calculateApproveValue(contracts.tokA.address, 1, await signers[1].getAddress())).to.be.gt(ethers.constants.Zero);
+
+    expect(await crecUniswap.calculateApproveValue(contracts.tokA.address, 2, await signers[1].getAddress())).to.eq(ethers.constants.Zero);
+  });
+
+  it('runs the trade sequence', async () => {
+    const signers = await (<any>ethers).getSigners();
 
     // send some fake money for the return
     await contracts.tokB.transfer(crecUniswap.address, ethers.utils.parseEther('100'));
