@@ -30,7 +30,11 @@ struct TokenAmounts {
 
     uint256 feeToPay;
 
-    uint256 validAddrs;
+    uint64 validAddrs0;
+    uint64 validAddrs1;
+
+    uint64 paidAddrs0;
+    uint64 paidAddrs1;
 }
 
 contract CrecUniswapAir is Crescendo {
@@ -166,9 +170,6 @@ contract CrecUniswapAir is Crescendo {
             uint[] memory inAmounts1 = new uint[](addrs.length);
 
             {
-                uint fee = opInfo[pair].fee;
-                amts.validAddrs = addrs.length;
-                amts.feeToPay = fee * amts.validAddrs;
 
                 for(uint i = 0;i < addrs.length;i++) {
                     inAmounts0[i] = calculateApproveValue(token0, pair, addrs[i]);
@@ -176,6 +177,7 @@ contract CrecUniswapAir is Crescendo {
                         console.log("deduct from 0 ", inAmounts0[i]);
                         amts.totalIn0 += inAmounts0[i];
                         IERC20(token0).transferFrom(addrs[i], address(this), inAmounts0[i]);
+                        amts.validAddrs0++;
                         continue;
                     }
 
@@ -185,14 +187,16 @@ contract CrecUniswapAir is Crescendo {
                         console.log("deduct from 1 ", inAmounts1[i]);
                         amts.totalIn1 += inAmounts1[i];
                         IERC20(token1).transferFrom(addrs[i], address(this), inAmounts1[i]);
+                        amts.validAddrs1++;
                         continue;
                     }
 
                     // this address will not be trading
                     console.log("skip trade");
-                    amts.feeToPay -= fee;
                 }
             }
+
+            amts.feeToPay = opInfo[pair].fee * (amts.validAddrs0 + amts.validAddrs1);
 
             // run uniswap trade
             if (amts.totalIn0 > 0 || amts.totalIn1 > 0) {
@@ -241,7 +245,7 @@ contract CrecUniswapAir is Crescendo {
                 if(inAmounts0[i] > 0) {
                     uint val = SafeMath.div(SafeMath.mul(amts.cover1, inAmounts0[i]), amts.totalIn0);
 
-                    if(amts.cover1 - amts.totalOut1 < amts.feeToPay / addrs.length + val) {
+                    if(amts.validAddrs0 - amts.paidAddrs0 == 1) {
                         console.log("this is last");
                         val = amts.cover1 - amts.totalOut1;
                     }
@@ -249,12 +253,13 @@ contract CrecUniswapAir is Crescendo {
                     console.log("distribute with 1", val);
 
                     amts.totalOut1 += val;
+                    amts.paidAddrs0++;
                     IERC20(token1).transfer(addrs[i], val);
                 }
                 else if(inAmounts1[i] > 0) {
                     uint val = SafeMath.div(SafeMath.mul(amts.cover0, inAmounts1[i]), amts.totalIn1);
 
-                    if(amts.cover0 - amts.totalOut0 < amts.feeToPay / addrs.length + val) {
+                    if(amts.validAddrs1 - amts.paidAddrs1 == 1) {
                         console.log("this last");
                         val = amts.cover0 - amts.totalOut0;
                     }
@@ -262,12 +267,13 @@ contract CrecUniswapAir is Crescendo {
                     console.log("distribute with 0", val);
 
                     amts.totalOut0 += val;
+                    amts.paidAddrs1++;
                     IERC20(token0).transfer(addrs[i], val);
                 }
             }
         }
 
-        return amts.validAddrs;
+        return amts.validAddrs0 + amts.validAddrs1;
     }
 
     function uint256At(bytes memory data, uint256 location) internal pure returns (uint256 result) {

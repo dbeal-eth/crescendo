@@ -15,6 +15,7 @@ import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-t
 import { Treasury } from '../typechain/Treasury';
 
 import { TokenFactory } from '../typechain/TokenFactory';
+import _ from 'lodash';
 
 use(solidity);
 
@@ -26,6 +27,7 @@ function createCrecendoApproval(amt: string, id: number, deadline: number, minTr
 }
 
 describe("CrecUniswapAir", function() {
+  this.timeout(300000);
 
   let signer: Ethers.Signer;
 
@@ -208,5 +210,32 @@ describe("CrecUniswapAir", function() {
     await contracts.weth.approve(crecUniswap.address, amt);
     await crecUniswap.fill(amt);
     expect(await contracts.weth.balanceOf(await signer.getAddress())).to.be.lt(balBefore);
-  })
+  });
+
+  it('trades 150 addresses in one exec', async () => {
+
+    const addrs: string[] = [];
+    const signers = await ethers.getSigners();
+
+    for(let i = 1;i < 150;i++) {
+
+      const tmpAddr = await signers[i].getAddress();
+
+      await contracts.tokA.transfer(tmpAddr, ethers.utils.parseEther(i.toString()));    
+
+      await new TokenFactory(signers[i]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval(i.toString(), 1, 100000));
+
+      addrs.push(tmpAddr);
+    }
+
+    // make sure the contract has enough ether
+    await contracts.tokB.transfer(crecUniswap.address, ethers.utils.parseEther('1000'));
+
+    const txn = await crecUniswap.exec(1, addrs);
+    const r = await txn.wait();
+
+    // should fit in the block limit
+    console.log('gas used', r.gasUsed);
+    expect(r.gasUsed).to.be.lte(10000000);
+  });
 });
