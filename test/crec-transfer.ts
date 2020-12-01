@@ -18,9 +18,10 @@ import { TokenFactory } from '../typechain/TokenFactory';
 
 use(solidity);
 
-function createCrecendoApproval(amt: string, toId: number, idx: number) {
+function createCrecendoApproval(amt: string, id: number, toId: number, deadline: number) {
   return ethers.utils.parseEther(amt)
-    .add(BigNumber.from(idx).shl(192))
+    .add(BigNumber.from(id).shl(176))
+    .add(BigNumber.from(deadline).shl(192))
     .add(BigNumber.from(toId).shl(224));
 }
 
@@ -57,10 +58,10 @@ describe("CrecTransfer", function() {
 
   it('adds authorized token', async () => {
 
-    const txn = crecTransfer.addToken(contracts.weth.address);
+    const txn = crecTransfer.addAuthorizedToken(contracts.weth.address, ethers.utils.parseEther('0.001'));
     
     expect(txn)
-      .to.emit(crecTransfer, 'NewAuthorizedToken');
+      .to.emit(crecTransfer, 'NewAuthorizedOp');
   });
 
   it('allows registration of any destination address', async () => {
@@ -77,25 +78,6 @@ describe("CrecTransfer", function() {
     expect(await crecTransfer.addressToId(myAddr)).to.eql(2);
 
     expect(await crecTransfer.idToAddress(1)).to.eql(testAddr);
-  });
-
-  it('marks after approval', async () => {
-
-    const signers = await (<any>ethers).getSigners();
-
-    //const txn = await crecUniswap.mark(1, signers[1]);
-
-    expect(crecTransfer.mark(contracts.weth.address, await signers[1].getAddress())).to.be.reverted;
-
-    // send some tokA and tokB to both
-    await contracts.weth.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
-    await contracts.weth.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
-
-    // they all approve stuff
-    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('4',  2, 10000));
-    await new TokenFactory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('3',  2, 10000));
-
-    await crecTransfer.mark(contracts.weth.address, await signers[1].getAddress());
   });
 
   it.skip('calculates reward', async () => {
@@ -118,9 +100,36 @@ describe("CrecTransfer", function() {
     expect(reward3.div(3)).to.eql(exp.div(3));
   });
 
-  it('runs the transfer sequence', async () => {
-
+  it('runs transfer with single address', async () => {
     const signers = await (<any>ethers).getSigners();
+
+    // send some tokA and tokB to both
+    await contracts.weth.transfer(await signers[1].getAddress(), ethers.utils.parseEther('100'));
+    await contracts.weth.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
+
+    // approve 1
+    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('10', 1, 2, 10000));
+
+
+    const myAddr = await signer.getAddress();
+    const addr1 = await signers[1].getAddress();
+
+    const beforeAmtMy = await contracts.weth.balanceOf(myAddr);
+    const beforeAmt1 = await contracts.weth.balanceOf(addr1);
+
+    const txn = await crecTransfer.exec(1, [addr1]);
+    await txn.wait(1);
+
+    expect(await contracts.weth.balanceOf(addr1)).to.eq(beforeAmt1.sub(ethers.utils.parseEther('10')));
+    expect(await contracts.weth.balanceOf(myAddr)).to.be.gt(beforeAmtMy.add(ethers.utils.parseEther('9.5')));
+  });
+
+  it('runs transfer with multiple addresses', async () => {
+    const signers = await (<any>ethers).getSigners();
+
+    // they all approve stuff
+    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('4', 1, 2, 10000));
+    await new TokenFactory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('3', 1, 2, 10000));
 
     const myAddr = await signer.getAddress();
 
@@ -131,14 +140,42 @@ describe("CrecTransfer", function() {
     const beforeAmt1 = await contracts.weth.balanceOf(addr1);
     const beforeAmt2 = await contracts.weth.balanceOf(addr2);
 
-    const txn = await crecTransfer.exec(contracts.weth.address, [addr1, addr2]);
+    const txn = await crecTransfer.exec(1, [addr1, addr2]);
 
-    const rcpt = await txn.wait(1);
+    await txn.wait(1);
 
     expect(await contracts.weth.balanceOf(addr1)).to.eq(beforeAmt1.sub(ethers.utils.parseEther('4')));
     expect(await contracts.weth.balanceOf(addr2)).to.eq(beforeAmt2.sub(ethers.utils.parseEther('3')));
 
     expect(await contracts.weth.balanceOf(myAddr)).to.be.gt(beforeAmtMy.add(ethers.utils.parseEther('6.5')));
     expect(await contracts.weth.balanceOf(myAddr)).to.be.lt(beforeAmtMy.add(ethers.utils.parseEther('7')));
+  });
+
+  it('runs multi transfer with an invalid input address', async () => {
+    const signers = await (<any>ethers).getSigners();
+
+    // invalid (wrong crescendo id, should be ignored while others succeed)
+    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('2', 0, 2, 10000));
+
+    // valid
+    await new TokenFactory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('1', 1, 2, 10000));
+
+    const myAddr = await signer.getAddress();
+
+    const addr1 = await signers[1].getAddress();
+    const addr2 = await signers[2].getAddress();
+
+    const beforeAmtMy = await contracts.weth.balanceOf(myAddr);
+    const beforeAmt1 = await contracts.weth.balanceOf(addr1);
+    const beforeAmt2 = await contracts.weth.balanceOf(addr2);
+
+    const txn = await crecTransfer.exec(1, [addr1, addr2]);
+
+    await txn.wait(1);
+
+    expect(await contracts.weth.balanceOf(addr1)).to.eq(beforeAmt1);
+    expect(await contracts.weth.balanceOf(addr2)).to.eq(beforeAmt2.sub(ethers.utils.parseEther('1')));
+
+    expect(await contracts.weth.balanceOf(myAddr)).to.be.gt(beforeAmtMy.add(ethers.utils.parseEther('0.5')));
   });
 });

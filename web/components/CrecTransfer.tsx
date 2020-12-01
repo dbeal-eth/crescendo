@@ -71,7 +71,7 @@ function CrecTransfer() {
 
       const treasuryAddress = await crec.treasury();
 
-      const tokens = await crec.queryFilter(crec.filters.NewAuthorizedToken(null));
+      const tokens = await crec.queryFilter(crec.filters.NewAuthorizedOp(null, null, null, null));
 
       const newContractInfo: CrecTransferContractInfo = {
         targetPeriod: await crec.targetInterval(),
