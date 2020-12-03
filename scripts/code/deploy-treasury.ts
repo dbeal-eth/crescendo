@@ -49,41 +49,25 @@ export async function deployTreasuryWithPoolNoFactory(signer: Ethers.Signer, lib
         tokenBalances: _.map(tokens, 1),
         tokenWeights: _.map(tokens, (_, i) => i == 0 ? STARTING_WEIGHT : STARTING_WEIGHT.div(2)),
         swapFee: options.swapFee || ethers.utils.parseEther('0.000001'),
-      }, {
+    }, {
         canPauseSwapping: true,
         canChangeSwapFee: false,
         canChangeWeights: true,
         canAddRemoveTokens: true,
         canWhitelistLPs: true,
         canChangeCap: true,
-      })
-    
-    console.log('sent the treasury');
+    });
 
     for(const token of tokens) {
         // typescript has some sort of issue with the generated code for IERC20
         const ctrct = await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', token[0], signer);
-
-        console.log('one');
         
         const txn = await ctrct.approve(treasury.address, ethers.constants.MaxUint256);
-
-        console.log('two');
-
         await txn.wait(1);
-
-        console.log('three');
     }
 
-    console.log('got done with tokens approve');
-
     let txn = await treasury["createPool(uint256)"](ethers.utils.parseEther((10000).toString()));
-
-    console.log('doing it');
-
     await txn.wait(1);
-
-    console.log('created bpool');
 
     return treasury;
 }

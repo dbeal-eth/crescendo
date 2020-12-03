@@ -21,8 +21,6 @@ export async function deployCrecTransfer(signer: Ethers.Signer, treasury: Treasu
         targetTreasuryBalance = await treasury.getTreasuryBalance();
     }
 
-    console.log('target traesury balance', ethers.utils.formatEther(targetTreasuryBalance));
-
     const crecTransfer = await new CrecTransferFactory(signer).deploy(treasury.address, options.targetInterval || ethers.BigNumber.from(600), targetTreasuryBalance, {
         gasLimit: 1800000 
     });
