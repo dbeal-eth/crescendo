@@ -6,8 +6,8 @@ import { ethers } from 'hardhat';
 
 import { Treasury } from '../../typechain/Treasury';
 import { CrecUniswapAir } from '../../typechain/CrecUniswapAir';
-import { CrecUniswapAirFactory } from '../../typechain/CrecUniswapAirFactory';
-import { TreasuryFactory } from '../../typechain/TreasuryFactory';
+import { CrecUniswapAir__factory } from '../../typechain/factories/CrecUniswapAir__factory';
+import { Treasury__factory } from '../../typechain/factories/Treasury__factory';
 
 const STARTING_WEIGHT = ethers.utils.parseEther('10');
 
@@ -23,7 +23,7 @@ export async function deployCrecUniswap(signer: Ethers.Signer, treasury: Treasur
 
     console.log('target traesury balance', targetTreasuryBalance);
 
-    const crecUniswap = await new CrecUniswapAirFactory(signer).deploy(treasury.address, options.targetInterval || ethers.BigNumber.from(600), targetTreasuryBalance);
+    const crecUniswap = await new CrecUniswapAir__factory(signer).deploy(treasury.address, options.targetInterval || ethers.BigNumber.from(600), targetTreasuryBalance);
 
     await crecUniswap.deployed();
 
@@ -54,10 +54,10 @@ if(module == require.main) {
 
         let crecUniswap: CrecUniswapAir;
         if(process.env.CREC_UNISWAP) {
-            crecUniswap = CrecUniswapAirFactory.connect(process.env.CREC_UNISWAP!, signer);
+            crecUniswap = CrecUniswapAir__factory.connect(process.env.CREC_UNISWAP!, signer);
         }
         else {
-            crecUniswap = await deployCrecUniswap(signer, TreasuryFactory.connect(treasuryAddress, signer));
+            crecUniswap = await deployCrecUniswap(signer, Treasury__factory.connect(treasuryAddress, signer));
         }
 
 

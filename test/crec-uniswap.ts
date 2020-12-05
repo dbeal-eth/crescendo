@@ -7,14 +7,14 @@ import { ethers } from 'hardhat';
 import { ethers as Ethers } from 'ethers';
 
 import { CrecUniswap } from '../typechain/CrecUniswap';
-import { CrecUniswapFactory } from '../typechain/CrecUniswapFactory';
+import { CrecUniswap__factory } from '../typechain/factories/CrecUniswap__factory';
 
 import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
 import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 
-import { TokenFactory } from '../typechain/TokenFactory';
+import { Token__factory } from '../typechain/factories/Token__factory';
 
 use(solidity);
 
@@ -53,7 +53,7 @@ describe("CrecUniswap", function() {
   });
 
   it('deploys', async () => {
-    crecUniswap = await new CrecUniswapFactory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
+    crecUniswap = await new CrecUniswap__factory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
 
     await crecUniswap.deployed();
 
@@ -99,12 +99,12 @@ describe("CrecUniswap", function() {
     await contracts.tokB.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
 
     // they all approve stuff
-    await new TokenFactory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1));
-    await new TokenFactory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 2));
-    await new TokenFactory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1));
-    await new TokenFactory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  2));
-    await new TokenFactory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1));
-    await (await new TokenFactory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 2))).wait(1);
+    await new Token__factory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1));
+    await new Token__factory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 2));
+    await new Token__factory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1));
+    await new Token__factory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  2));
+    await new Token__factory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1));
+    await (await new Token__factory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 2))).wait(1);
 
     await crecUniswap.mark(1, await signers[1].getAddress());
   });

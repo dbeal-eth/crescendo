@@ -6,22 +6,22 @@ import { ethers } from 'hardhat';
 
 import { ethers as Ethers } from "ethers";
 
-import { RightsManagerFactory } from '../../typechain/RightsManagerFactory';
-import { SmartPoolManagerFactory } from '../../typechain/SmartPoolManagerFactory';
+import { RightsManager__factory } from '../../typechain/factories/RightsManager__factory';
+import { SmartPoolManager__factory } from '../../typechain/factories/SmartPoolManager__factory';
 
-import { BFactoryFactory } from '../../typechain/BFactoryFactory';
+import { BFactory__factory } from '../../typechain/factories/BFactory__factory';
 import { BFactory } from '../../typechain/BFactory';
 
-import { RelayHubFactory } from '../../typechain/RelayHubFactory';
+import { RelayHub__factory } from '../../typechain/factories/RelayHub__factory';
 import { RelayHub } from '../../typechain/RelayHub';
 
-import { TokenFactory } from '../../typechain/TokenFactory';
+import { Token__factory } from '../../typechain/factories/Token__factory';
 import { Token } from '../../typechain/Token';
 
-import { Weth9Factory } from '../../typechain/Weth9Factory'
-import { Weth9 } from '../../typechain/Weth9';
+import { WETH9__factory } from '../../typechain/factories/WETH9__factory'
+import { WETH9 } from '../../typechain/WETH9';
 
-const RELAY_HUB_CONFIG = {
+/*const RELAY_HUB_CONFIG = {
   gasOverhead: 35965,
   postOverhead: 13950,
   gasReserve: 100000,
@@ -29,12 +29,12 @@ const RELAY_HUB_CONFIG = {
   minimumStake: 1e18.toString(),
   minimumUnstakeDelay: 1000,
   maximumRecipientDeposit: 2e18.toString()
-}
+}*/
 
 export interface EnvContracts {
     bfactory: BFactory,
-    relayHub: RelayHub,
-    weth: Weth9,
+ // relayHub: RelayHub,
+    weth: WETH9,
     tokA: Token,
     tokB: Token,
     tokC: Token
@@ -64,9 +64,9 @@ export async function deployLibs(signer: Ethers.Signer) {
       }*/
     }
 
-    const rightsManager = await new RightsManagerFactory(signer).deploy();
+    const rightsManager = await new RightsManager__factory(signer).deploy();
     await rightsManager.deployed();
-    const smartPoolManager = await new SmartPoolManagerFactory(signer).deploy();
+    const smartPoolManager = await new SmartPoolManager__factory(signer).deploy();
     await smartPoolManager.deployed();
   
     // safe math does not have an ABI for some reason...?
@@ -74,10 +74,11 @@ export async function deployLibs(signer: Ethers.Signer) {
   
     await safeMath.deployed();
   
+    // below changed to match with treasury factory generated linking in order to run tests
     return {
-      "__$4c38f6d953980cddd3b3b35f19465719a4$__": smartPoolManager.address,
-      "__$d299c529ae9894de884ff0b1c314d5e4d5$__": rightsManager.address,
-      "__$3090edb928940b408c0d9b35a986dbcddb$__": safeMath.address,
+      "__$3973e80ae02d5389bae71cf7158dc6a2fe$__": smartPoolManager.address,
+      "__$a50f5b38fcbdb2019850b089c75525c263$__": rightsManager.address,
+      "__$2dd58cb41e28e69618f8365a6abab0efa0$__": safeMath.address,
     };
 }
 
@@ -89,12 +90,13 @@ export async function deployEnv(signer: Ethers.Signer): Promise<[ EnvContracts, 
     const libs = await deployLibs(signer);
 
     // deploy bfactory
-    const bFactory = new BFactoryFactory(signer);
+    const bFactory = new BFactory__factory(signer);
 
     contracts.bfactory = await bFactory.deploy();
 
+    /*
     // deploy GSN relayhub
-    contracts.relayHub = await new RelayHubFactory(signer).deploy(
+    contracts.relayHub = await new RelayHub__factory(signer).deploy(
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,
       RELAY_HUB_CONFIG.maxWorkerCount,
@@ -105,14 +107,15 @@ export async function deployEnv(signer: Ethers.Signer): Promise<[ EnvContracts, 
       RELAY_HUB_CONFIG.minimumUnstakeDelay,
       RELAY_HUB_CONFIG.minimumStake
     )
+    */
 
     // deploy tokens
-    contracts.weth = await new Weth9Factory(signer).deploy();
+    contracts.weth = await new WETH9__factory(signer).deploy();
     await contracts.weth.deposit({
       value: ethers.utils.parseEther('1000')
     });
 
-    const tokenFactory = new TokenFactory(signer);
+    const tokenFactory = new Token__factory(signer);
 
     contracts.tokA = await tokenFactory.deploy('Token A', 'TOKA', ethers.constants.MaxUint256);
     contracts.tokB = await tokenFactory.deploy('Token B', 'TOKB', ethers.constants.MaxUint256);

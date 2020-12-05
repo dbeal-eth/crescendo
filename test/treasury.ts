@@ -12,7 +12,7 @@ import { ethers as Ethers } from 'ethers';
 
 import { Treasury } from '../typechain/Treasury';
 import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
-import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
+import { deployTreasury, deployTreasuryWithPoolNoFactory } from '../scripts/code/deploy-treasury';
 
 use(solidity);
 
@@ -37,8 +37,8 @@ describe("Treasury", function() {
 
   it('deploys', async () => {
 
-    treasury = await deployTreasuryWithPool(signer, libs, contracts.bfactory.address, [[contracts.weth.address, ethers.utils.parseEther('500')], [contracts.tokA.address, ethers.utils.parseEther('100')], [contracts.tokB.address, ethers.utils.parseEther('100')]]);
-
+    treasury = await deployTreasuryWithPoolNoFactory(signer, libs, contracts.bfactory.address, [[contracts.weth.address, ethers.utils.parseEther('500')], [contracts.tokA.address, ethers.utils.parseEther('100')], [contracts.tokB.address, ethers.utils.parseEther('100')]]);
+    console.log('treasury address ' + treasury.address);
     expect(await treasury.bPool()).to.not.eql(ethers.constants.AddressZero);
     expect((await treasury.getTreasuryBalance()).toString()).to.eql(ethers.utils.parseEther('500').toString());
   });
@@ -68,11 +68,11 @@ describe("Treasury", function() {
     expect(ethers.utils.formatEther(balAfter.sub(balBefore))).to.eql('-1.0');
   })
 
-  it('funds relayhub', async () => {
+  /*it('funds relayhub', async () => {
     const txn = await treasury.setRelayHub(contracts.relayHub.address, ethers.utils.parseEther('1'));
 
     await txn.wait(1);
 
     expect((await treasury.getRelayHubDeposit()).toString()).to.eql((ethers.utils.parseEther('1')).toString());
-  });
+  });*/
 });

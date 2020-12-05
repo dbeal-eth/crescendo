@@ -7,7 +7,9 @@ Crescendo is a gas optimizing proxy for popular defi protocols, such as Uniswap 
 
 To test crescendo in a local testnet, follow the following instructions:
 
-1. Install npm dependencies: `npm install`
+1. Install npm dependencies: `npm install` 
+
+# `npm--save-dev hardhat ts-node typescript @types/node @types/mocha ethers @nomiclabs/hardhat-waffle ethereum-waffle hardhat-typechain typechain ts-generator @typechain/ethers-v5 @nomiclabs/hardhat-ethers chai @nomiclabs/hardhat-etherscan`
 2. Compile typechain definitions: `npx hardhat typechain`
 3. (optional) run the tests: `npx hardhat test`
 4. Start up the local testnet:

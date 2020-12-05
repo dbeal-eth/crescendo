@@ -7,14 +7,14 @@ import { ethers } from 'hardhat';
 import { BigNumber, ethers as Ethers } from 'ethers';
 
 import { CrecTransfer } from '../typechain/CrecTransfer';
-import { CrecTransferFactory } from '../typechain/CrecTransferFactory';
+import { CrecTransfer__factory } from '../typechain/factories/CrecTransfer__factory';
 
 import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
 import { deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 
-import { TokenFactory } from '../typechain/TokenFactory';
+import { Token__factory } from '../typechain/factories/Token__factory';
 
 use(solidity);
 
@@ -45,7 +45,7 @@ describe("CrecTransfer", function() {
   });
 
   it('deploys', async () => {
-    crecTransfer = await new CrecTransferFactory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
+    crecTransfer = await new CrecTransfer__factory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
 
     await crecTransfer.deployed();
 
@@ -108,7 +108,7 @@ describe("CrecTransfer", function() {
     await contracts.weth.transfer(await signers[2].getAddress(), ethers.utils.parseEther('100'));
 
     // approve 1
-    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('10', 1, 2, 10000));
+    await new Token__factory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('10', 1, 2, 10000));
 
 
     const myAddr = await signer.getAddress();
@@ -128,8 +128,8 @@ describe("CrecTransfer", function() {
     const signers = await (<any>ethers).getSigners();
 
     // they all approve stuff
-    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('4', 1, 2, 10000));
-    await new TokenFactory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('3', 1, 2, 10000));
+    await new Token__factory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('4', 1, 2, 10000));
+    await new Token__factory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('3', 1, 2, 10000));
 
     const myAddr = await signer.getAddress();
 
@@ -155,10 +155,10 @@ describe("CrecTransfer", function() {
     const signers = await (<any>ethers).getSigners();
 
     // invalid (wrong crescendo id, should be ignored while others succeed)
-    await new TokenFactory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('2', 0, 2, 10000));
+    await new Token__factory(signers[1]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('2', 0, 2, 10000));
 
     // valid
-    await new TokenFactory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('1', 1, 2, 10000));
+    await new Token__factory(signers[2]).attach(contracts.weth.address).approve(crecTransfer.address, createCrecendoApproval('1', 1, 2, 10000));
 
     const myAddr = await signer.getAddress();
 
