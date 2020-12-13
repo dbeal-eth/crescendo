@@ -34,7 +34,7 @@ export async function deployCrecTransfer(signer: Ethers.Signer, treasury: Treasu
 }
 
 export async function addAuthorizedToken(crec: CrecTransfer, token: string) {
-    return await crec.addToken(token);
+    return await crec.addAuthorizedToken(token,ethers.utils.parseEther('1'));
 }
 
 

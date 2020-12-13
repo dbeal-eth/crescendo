@@ -3,7 +3,7 @@ import { network } from "hardhat";
 
 const ADDRESSES = {
     'local': {
-        crecUniswap: '',
+        crecUniswap: '0xcbEAF3BDe82155F56486Fb5a1072cb8baAf547cc',
         crecTransfer: '0x78Aeff0658Fa67735fBF99Ce7CDB01Fe5D520259'
     },
     'kovan': {
