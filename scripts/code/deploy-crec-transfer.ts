@@ -6,8 +6,8 @@ import { ethers } from 'hardhat';
 
 import { Treasury } from '../../typechain/Treasury';
 import { CrecTransfer } from '../../typechain/CrecTransfer';
-import { CrecTransferFactory } from '../../typechain/CrecTransferFactory';
-import { TreasuryFactory } from '../../typechain/TreasuryFactory';
+import { CrecTransfer__factory } from '../../typechain/factories/CrecTransfer__factory';
+import { Treasury__factory } from '../../typechain/factories/Treasury__factory';
 
 const STARTING_WEIGHT = ethers.utils.parseEther('10');
 
@@ -21,7 +21,7 @@ export async function deployCrecTransfer(signer: Ethers.Signer, treasury: Treasu
         targetTreasuryBalance = await treasury.getTreasuryBalance();
     }
 
-    const crecTransfer = await new CrecTransferFactory(signer).deploy(treasury.address, options.targetInterval || ethers.BigNumber.from(600), targetTreasuryBalance, {
+    const crecTransfer = await new CrecTransfer__factory(signer).deploy(treasury.address, options.targetInterval || ethers.BigNumber.from(600), targetTreasuryBalance, {
         gasLimit: 1800000 
     });
 
@@ -34,7 +34,7 @@ export async function deployCrecTransfer(signer: Ethers.Signer, treasury: Treasu
 }
 
 export async function addAuthorizedToken(crec: CrecTransfer, token: string) {
-    return await crec.addToken(token);
+    return await crec.addAuthorizedToken(token,ethers.utils.parseEther('1'));
 }
 
 
@@ -52,7 +52,7 @@ if(module == require.main) {
             return;
         }
 
-        const crec = await deployCrecTransfer(signer, TreasuryFactory.connect(treasuryAddress, signer));
+        const crec = await deployCrecTransfer(signer, Treasury__factory.connect(treasuryAddress, signer));
 
         console.log('deployed crescendo transfer:', crec.address);
 

@@ -4,7 +4,7 @@ pragma solidity ^0.6.8;
 // Needed to handle structures externally
 pragma experimental ABIEncoderV2;
 
-import "lbp/contracts/ConfigurableRightsPool.sol";
+import "balancer-labs/contracts/ConfigurableRightsPool.sol";
 
 import "@opengsn/gsn/contracts/interfaces/IPaymaster.sol";
 import "@opengsn/gsn/contracts/interfaces/IRelayHub.sol";

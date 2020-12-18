@@ -3,7 +3,7 @@ pragma solidity ^0.6.8;
 
 import "hardhat/console.sol";
 
-import "lbp/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../Crescendo.sol";
 

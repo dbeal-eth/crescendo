@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "lbp/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../Crescendo.sol";
 

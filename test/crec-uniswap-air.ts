@@ -7,14 +7,14 @@ import { ethers } from 'hardhat';
 import { ethers as Ethers } from 'ethers';
 
 import { CrecUniswapAir } from '../typechain/CrecUniswapAir';
-import { CrecUniswapAirFactory } from '../typechain/CrecUniswapAirFactory';
+import { CrecUniswapAir__factory } from '../typechain/factories/CrecUniswapAir__factory';
 
 import { EnvLibs, EnvContracts, deployEnv } from '../scripts/code/deploy-env';
 import { deployTreasury, deployTreasuryWithPool } from '../scripts/code/deploy-treasury';
 
 import { Treasury } from '../typechain/Treasury';
 
-import { TokenFactory } from '../typechain/TokenFactory';
+import { Token__factory } from '../typechain/factories/Token__factory';
 import _ from 'lodash';
 
 use(solidity);
@@ -49,7 +49,7 @@ describe("CrecUniswapAir", function() {
   });
 
   it('deploys', async () => {
-    crecUniswap = await new CrecUniswapAirFactory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
+    crecUniswap = await new CrecUniswapAir__factory(signer).deploy(treasury.address, ethers.BigNumber.from(600), ethers.utils.parseEther('300'));
 
     await crecUniswap.deployed();
 
@@ -123,9 +123,9 @@ describe("CrecUniswapAir", function() {
     await contracts.tokB.transfer(await signers[3].getAddress(), ethers.utils.parseEther('100'));
 
     // they all approve stuff
-    await new TokenFactory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1, 10000));
-    await new TokenFactory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1, 10000));
-    await new TokenFactory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1, 10000));
+    await new Token__factory(signers[1]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('1',  1, 10000));
+    await new Token__factory(signers[2]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2',  1, 10000));
+    await new Token__factory(signers[3]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('4',  1, 10000));
 
     expect(await crecUniswap.calculateApproveValue(contracts.tokA.address, 1, await signers[1].getAddress())).to.be.gt(ethers.constants.Zero);
 
@@ -149,9 +149,9 @@ describe("CrecUniswapAir", function() {
     expect(await contracts.tokA.balanceOf(uniswapPair.address)).to.be.gt(ethers.utils.parseEther('6'));
 
     // test the other way
-    await new TokenFactory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 1, 10000));
-    await new TokenFactory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  1, 10000));
-    await new TokenFactory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 1, 10000));
+    await new Token__factory(signers[1]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('16', 1, 10000));
+    await new Token__factory(signers[2]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('8',  1, 10000));
+    await new Token__factory(signers[3]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('32', 1, 10000));
 
     await contracts.tokA.transfer(crecUniswap.address, ethers.utils.parseEther('100'));
 
@@ -171,9 +171,9 @@ describe("CrecUniswapAir", function() {
     await contracts.tokB.transfer(await signers[6].getAddress(), ethers.utils.parseEther('3'));
 
 
-    await new TokenFactory(signers[4]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('1', 1, 10000));
-    await new TokenFactory(signers[5]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2', 1, 10000));
-    await new TokenFactory(signers[6]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('3', 1, 10000));
+    await new Token__factory(signers[4]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('1', 1, 10000));
+    await new Token__factory(signers[5]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval('2', 1, 10000));
+    await new Token__factory(signers[6]).attach(contracts.tokB.address).approve(crecUniswap.address, createCrecendoApproval('3', 1, 10000));
 
     const prevUniTokenA = await contracts.tokA.balanceOf(uniswapPair.address);
 
@@ -223,7 +223,7 @@ describe("CrecUniswapAir", function() {
 
       await contracts.tokA.transfer(tmpAddr, ethers.utils.parseEther(i.toString()));    
 
-      await new TokenFactory(signers[i]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval(i.toString(), 1, 100000));
+      await new Token__factory(signers[i]).attach(contracts.tokA.address).approve(crecUniswap.address, createCrecendoApproval(i.toString(), 1, 100000));
 
       addrs.push(tmpAddr);
     }

@@ -3,7 +3,8 @@ const { task } = require('hardhat/config');
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
 import 'hardhat-typechain';
-import { HardhatConfig } from 'hardhat/types';
+import { HardhatUserConfig } from 'hardhat/types';
+//const walletUtils = require("./walletUtils");
 
 task("accounts", "Prints the list of accounts", async (taskArgs, bre) => {
   const accounts = await bre.ethers.getSigners();
@@ -13,7 +14,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, bre) => {
   }
 });
 
-const hhConfig: any = {
+const hhConfig: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
 
   networks: {
@@ -25,12 +26,21 @@ const hhConfig: any = {
       }
     },
     local: {
-      url: `http://localhost:8545`
+    url: `http://localhost:8545`,
+    blockGasLimit: 100000000,
+    allowUnlimitedContractSize: true
     },
     kovan: {
       url: `https://kovan.infura.io/v3/${process.env.INFURA}`,
       accounts: [process.env.KEY || '0x00']
     },
+    /*
+     kovan: {
+      url: `https://kovan.infura.io/v3/d126f392798444609246423b06116c77`,
+      accounts: walletUtils.makeKeyList(),
+      chainId:42
+    },
+    */
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA}`,
       accounts: [process.env.KEY || '0x00']
@@ -65,10 +75,10 @@ const hhConfig: any = {
   },
 };
 
-if(process.env.INFURA) {
+/*if(process.env.INFURA) {
   hhConfig.networks.hardhat.forking = {
     url: `https://mainnet.infura.io/v3/${process.env.INFURA}`,
   };
-}
+}*/
 
 module.exports = hhConfig;
